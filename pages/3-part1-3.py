@@ -155,7 +155,7 @@ def get_grouped_df(input_df, columns=None):
         f'class_{discretize_column}': set,
         }).rename(columns={f'class_{discretize_column}': 'Items'})
 grouped_df = get_grouped_df(df_width)
-grouped_df.to_csv(data_dir / 'part3_grouped_df.csv')
+grouped_df.to_csv('data/part3_grouped_df.csv')
 
 st.subheader('Apriori and association rules')
 with st.expander("Grouped DataFrame"):
