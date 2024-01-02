@@ -20,12 +20,6 @@ st.set_page_config(page_title="Superstore!!!", page_icon=":bar_chart:",layout="w
 st.title(" :bar_chart:  EDA")
 st.markdown('<style>div.block-container{padding-top:1rem;}</style>',unsafe_allow_html=True)
 
-with st.sidebar:
-    st.title('Projet DM partie 1 ')
-
-    # Options pour la partie
-    selected_part = st.selectbox('Select Part:', ['Part 1-1', 'Part 1-2','Part 1-3'])
-
 
 fl = st.file_uploader(":file_folder: Upload a file",type=(["csv","txt","xlsx","xls"]))
 if fl is not None:
@@ -108,9 +102,10 @@ st.write("we notice that :orange[**we have different format of dates**], we shou
 
 
 st.divider()
+st.subheader('Scatter Plot of Case Count and Start Date Year')
+
 col1, col2 = st.columns((2))
 
-st.title('Scatter Plot of Case Count and Start Date Year')
 
 with col1: 
 
@@ -283,7 +278,7 @@ def plot(input_df, *, plot_type: PlotType) -> None:
     else:
         raise ValueError('Invalid plot type')
 
-    plt.title('Evolution of COVID-19 Tests and Cases Over Time')
+    plt.subheader('Evolution of COVID-19 Tests and Cases Over Time')
     plt.legend()
 
     # Afficher le plot dans Streamlit
@@ -473,7 +468,7 @@ chart = alt.Chart(df_population).mark_bar().encode(
 # Display the Altair chart using Streamlit
 st.altair_chart(chart, use_container_width=True)
 
-st.title('Scatter Plot of Population and Tests')
+st.subheader('Scatter Plot of Population and Tests')
 
 chart = alt.Chart(df_population).mark_circle().encode(
     x='population:Q',
@@ -493,18 +488,16 @@ st.altair_chart(chart, use_container_width=True)
 def get_most_affected_zones(input_df: pd.DataFrame) -> pd.DataFrame:
     return input_df.groupby(['zcta']).agg({'case count': 'sum'}).reset_index().sort_values(by='case count', ascending=False)
 
-# Function to get most affected zones by case ratio
+
 def get_most_affected_zones_by_case_ratio(input_df: pd.DataFrame) -> pd.DataFrame:
     return input_df.groupby(['zcta']).agg({'case count': 'sum', 'test count': 'sum'}).reset_index().assign(ratio=lambda x: x['case count'] / x['test count']).sort_values(by='ratio', ascending=False)
 
-# Function to get most affected zones by positive rate
 def get_most_affected_zones_by_positive_rate(input_df: pd.DataFrame) -> pd.DataFrame:
     return input_df.groupby(['zcta']).agg({'positive tests': 'sum', 'test count': 'sum'}).reset_index().assign(ratio=lambda x: x['positive tests'] / x['test count']).sort_values(by='ratio', ascending=False)
 
-# Create a Streamlit app
-st.title('Analysis of Most Affected Zones')
 
-# Create a form with a dropdown to select the analysis type
+st.subheader('Analysis of Most Affected Zones')
+
 analysis_type = st.selectbox("Select Analysis Type:", ["Most Affected Zones", "Case Ratio", "Positive Rate"])
 
 # Perform analysis based on the selected type
@@ -547,7 +540,7 @@ def plot_most_affected_zone_by_case_count(input_df: pd.DataFrame, number_of_zone
     st.altair_chart(chart, use_container_width=True)
 
 
-st.title('Analysis of Most Affected Zones')
+st.subheader('Analysis of Most Affected Zones')
 number_of_zones = st.slider('Select Number of Zones:', min_value=1, max_value=len(df['zcta']), value=5)
 
 most_affected_zones = get_most_affected_zones(df)
