@@ -27,7 +27,7 @@ if fl is not None:
     st.write(filename)
     df = pd.read_csv(filename, encoding = "ISO-8859-1")
 else:
-    os.chdir(r"C:\Users\user\Downloads\PythonStreamlit-main\data")
+    os.chdir(r"C:\Users\user\OneDrive\Bureau\data_mining-master\data")
     df = pd.read_csv("Dataset1.csv", encoding = "ISO-8859-1")
     st.subheader("Loaded Dataset")
 
@@ -74,6 +74,26 @@ with col2:
    st.pyplot(fig)
 
 
+plt.figure(figsize=(12, 8))
+
+plt.subplot(2, 2, 1)
+sns.scatterplot(x='total_bill', y='tip', data=df)
+plt.title('Scatter Plot of Total Bill vs Tip')
+
+plt.subplot(2, 2, 2)
+sns.boxplot(x='day', y='total_bill', data=df)
+plt.title('Box Plot of Total Bill by Day')
+
+plt.subplot(2, 2, 3)
+sns.barplot(x='day', y='total_bill', data=df)
+plt.title('Bar Plot of Total Bill by Day')
+
+plt.subplot(2, 2, 4)
+sns.histplot(data['total_bill'], kde=True)
+plt.title('Histogram of Total Bill')
+
+plt.tight_layout()
+plt.show()
     
 def check_weird_values(data):
     for col in data.columns:

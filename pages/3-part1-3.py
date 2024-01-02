@@ -35,7 +35,7 @@ if fl is not None:
     st.write(filename)
     df = pd.read_csv(filename, encoding = "ISO-8859-1")
 else:
-    os.chdir(r"C:\Users\user\Downloads\PythonStreamlit-main\data")
+    os.chdir(r"C:\Users\user\OneDrive\Bureau\data_mining-master\data")
     df = pd.read_csv("Dataset3.csv", encoding = "ISO-8859-1")
     st.subheader("Loaded Dataset")
 
@@ -387,19 +387,17 @@ class Apriori:
 
 apriori = Apriori(min_support=0.4, min_confidence=0.8)
 
-# Streamlit interface
 st.subheader("Apriori Algorithm Interface")
 
-# Form for algorithm parameters
+
 with st.form(key='algorithm_parameters'):
     st.subheader("Algorithm Parameters")
     min_support = st.slider("Minimum Support", 0.1, 1.0, apriori.min_support)
     min_confidence = st.slider("Minimum Confidence", 0.1, 1.0, apriori.min_confidence)
 
-    # Update Apriori parameters
+
     apriori.set_params(min_support=min_support, min_confidence=min_confidence)
 
-    # Submit button for the form
     submit_button = st.form_submit_button(label='Run Apriori Algorithm')
 
 # Display frequent itemsets and rules if the algorithm parameters form is submitted
@@ -421,10 +419,8 @@ if submit_button:
         metric = st.selectbox("Select Metric", ['confidence', 'cosine', 'lift', 'all_confidence', 'jaccard', 'kulczynski', 'max_confidence'])
         n_rules = st.slider("Number of Rules to Display", 1, 20, 2)
 
-        # Submit button for the metric selection form
         submit_metric_button = st.form_submit_button(label='Show Strong Rules')
 
-    # Display strong rules based on the selected metric
     if submit_metric_button:
         st.header(f"Strong Rules - Metric: {metric}")
         st.write(apriori.get_strong_rules(metric=metric, n_rules=n_rules))
