@@ -278,7 +278,7 @@ def plot(input_df, *, plot_type: PlotType) -> None:
     else:
         raise ValueError('Invalid plot type')
 
-    plt.subheader('Evolution of COVID-19 Tests and Cases Over Time')
+    plt.title('Evolution of COVID-19 Tests and Cases Over Time')
     plt.legend()
 
     # Afficher le plot dans Streamlit
