@@ -35,8 +35,7 @@ if fl is not None:
     st.write(filename)
     df = pd.read_csv(filename, encoding = "ISO-8859-1")
 else:
-    os.chdir(r"C:\Users\user\OneDrive\Bureau\data_mining-master\data")
-    df = pd.read_csv("Dataset3.csv", encoding = "ISO-8859-1")
+    df = pd.read_csv("data/Dataset3.csv", encoding = "ISO-8859-1")
     st.subheader("Loaded Dataset")
 
 col1, col2 = st.columns((2))
