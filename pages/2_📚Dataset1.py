@@ -4,7 +4,6 @@ from enum import Enum
 import seaborn as sns
 import matplotlib.pyplot as plt
 from matplotlib import pyplot as plt
-from collections import Counter
 import numpy as np
 import streamlit as st
 import plotly.express as px
@@ -48,13 +47,13 @@ col1, col2 = st.columns([0.8, 0.2])
 _, view4, dwn4 = st.columns([0.5, 0.45, 0.45])
 
 with col1:
-    with st.expander("Data overview", expanded=True):
-        st.write("Dataset Overview:")
-        st.write("Rows:", df.shape[0])
-        st.write("Columns:", df.shape[1])
-        st.dataframe(df)
+    st.dataframe(df)
 
 with col2:
+    with st.expander("Data overview", expanded=True):
+        st.write("Rows:", df.shape[0])
+        st.write("Columns:", df.shape[1])
+
     st.download_button("Get Data", data=df.to_csv().encode("utf-8"),
                        file_name="Dataset1.csv", mime="text/csv")
 
