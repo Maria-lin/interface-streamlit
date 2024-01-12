@@ -1,23 +1,25 @@
+import streamlit.components.v1 as components
+import base64
+import altair as alt
+from pathlib import Path
+from enum import Enum
+import seaborn as sns
+import matplotlib.pyplot as plt
+from matplotlib import pyplot as plt
+from pprint import pprint
+from collections import Counter
+import numpy as np
 import streamlit as st
 import plotly.express as px
 import pandas as pd
 import os
 import warnings
 warnings.filterwarnings('ignore')
-import numpy as np
-from collections import Counter
-from pprint import pprint
-from matplotlib import pyplot as plt
-import matplotlib.pyplot as plt
-import seaborn as sns
-from enum import Enum
-from pathlib import Path
-import altair as alt
-import base64
-import streamlit.components.v1 as components
-st.set_page_config(page_title="Data Exploration Dashboard", page_icon=":chart_with_upwards_trend:", layout="wide")
+st.set_page_config(page_title="Data Exploration Dashboard",
+                   page_icon=":chart_with_upwards_trend:", layout="wide")
 st.title(" 	:bar_chart: Data Exploration ")
-st.markdown('<style>div.block-container{padding-top:1rem;}</style>',unsafe_allow_html=True)
+st.markdown(
+    '<style>div.block-container{padding-top:1rem;}</style>', unsafe_allow_html=True)
 alt.themes.enable("dark")
 
 
@@ -38,27 +40,29 @@ def add_bg_from_local(image_file):
         unsafe_allow_html=True
     )
 
+
 # Ajout de l'image de fond
-add_bg_from_local(r'C:\Users\user\OneDrive\Bureau\data_mining-master\data\huh.png')
+add_bg_from_local('data\huh.png')
 
 
-fl = st.file_uploader(":file_folder: Upload a file",type=(["csv","txt","xlsx","xls"]))
+fl = st.file_uploader(":file_folder: Upload a file",
+                      type=(["csv", "txt", "xlsx", "xls"]))
 if fl is not None:
     filename = fl.name
     st.write(filename)
-    df = pd.read_csv(filename, encoding = "ISO-8859-1")
+    df = pd.read_csv(filename, encoding="ISO-8859-1")
 else:
-   
-    df = pd.read_csv("data/Dataset1.csv", encoding = "ISO-8859-1")
+
+    df = pd.read_csv("data/Dataset1.csv", encoding="ISO-8859-1")
     st.subheader("Loaded Dataset")
 
 col1, col2 = st.columns((2))
-#col = st.columns((8.5,2), gap='medium')
-_, view4, dwn4 = st.columns([0.5,0.45,0.45])
+# col = st.columns((8.5,2), gap='medium')
+_, view4, dwn4 = st.columns([0.5, 0.45, 0.45])
 
 with col1:
-   
-   st.dataframe(df.head())
+
+    st.dataframe(df.head())
 
 with col2:
     with st.expander('About', expanded=False):
@@ -84,39 +88,46 @@ st.divider()
 st.subheader('Distribution :blue[ Analysis ] ')
 col1, col2 = st.columns((2))
 
-with col1 : 
+with col1:
     with st.expander("Correlation Matrix Heatmap"):
         plt.figure(figsize=(10, 4))
-        sns.heatmap(correlation_matrix, annot=True, cmap="YlGnBu", linewidths=.5, fmt=".2f", cbar_kws={"shrink": 0.75}, cbar=None)
+        sns.heatmap(correlation_matrix, annot=True, cmap="YlGnBu",
+                    linewidths=.5, fmt=".2f", cbar_kws={"shrink": 0.75}, cbar=None)
         plt.title("Customized Heatmap")
         plt.xlabel("X Axis Label")
         plt.ylabel("Y Axis Label")
         st.pyplot(plt)
 
 
-with col2 : 
-     with st.expander("Distribution Plot"):
-         st.subheader('Select a column for distribution plot:')
-         selected_column = st.selectbox("Select Column", df.columns)
-     
-         # Plot distribution using Streamlit's chart functions
-         st.subheader(f'Distribution of {selected_column}')
-         st.line_chart(df[selected_column].value_counts())
-         st.bar_chart(df[selected_column].value_counts())
+with col2:
+    with st.expander("Distribution Plot"):
+        st.subheader('Select a column for distribution plot:')
+        selected_column = st.selectbox("Select Column", df.columns)
 
-    
+        # Plot distribution using Streamlit's chart functions
+        st.subheader(f'Distribution of {selected_column}')
+        st.line_chart(df[selected_column].value_counts())
+        st.bar_chart(df[selected_column].value_counts())
+
+
 def check_weird_values(data):
     for col in data.columns:
         try:
             data[col] = data[col].astype(float)
         except ValueError as err:
             print(f'could not convert data on column "{col}" with error {err}')
+
+
 check_weird_values(df)
+
+
 def check_duplicated(data: pd.DataFrame):
     if num_duplicated := sum(data.duplicated()):
         print(f'df has {num_duplicated} duplicated rows')
     else:
         print('data frame has no duplicated rows')
+
+
 check_duplicated(df)
 st.divider()
 st.subheader('Number of :blue[ empty values ] in each column:')
@@ -132,7 +143,8 @@ with col1:
     with st.expander("Missing Values Summary", expanded=False):
 
         formatted_missing_values_df = missing_values_df.copy()
-        formatted_missing_values_df['Missing Values'] = formatted_missing_values_df['Missing Values'].apply(lambda x: f'{x:.0f}')
+        formatted_missing_values_df['Missing Values'] = formatted_missing_values_df['Missing Values'].apply(
+            lambda x: f'{x:.0f}')
 
         st.dataframe(
             formatted_missing_values_df,
@@ -141,26 +153,23 @@ with col1:
             hide_index=True
         )
 with col2:
-    
+
     with st.expander("Visualize Missing Values"):
-        
+
         missing_values_df = pd.DataFrame({
             'Attribute': df.columns,
             'Missing Values': df.isnull().sum()
         })
 
-      
         fig = px.bar(missing_values_df, x='Attribute', y='Missing Values',
                      labels={'Missing Values': 'Number of Missing Values'},
                      title='Missing Values in Each Attribute',
-                     width=400, 
+                     width=400,
                      height=400)
         st.plotly_chart(fig)
 
 
 st.divider()
-
-
 
 
 def remove_rows_with_errors(input_df: pd.DataFrame) -> pd.DataFrame:
@@ -171,7 +180,8 @@ def remove_rows_with_errors(input_df: pd.DataFrame) -> pd.DataFrame:
             input_df[col] = input_df[col].astype(float)
         except ValueError as e:
             print(f'could not convert data on column "{col}" with error {e}')
-            error_rows.extend(input_df[col][pd.to_numeric(input_df[col], errors='coerce').isna()].index.tolist())
+            error_rows.extend(input_df[col][pd.to_numeric(
+                input_df[col], errors='coerce').isna()].index.tolist())
 
     error_rows = np.unique(error_rows)
     df_cleaned = df.drop(index=error_rows)
@@ -193,18 +203,23 @@ def remove_duplicates_from_dataframe(input_df: pd.DataFrame) -> pd.DataFrame:
     output_df = pd.DataFrame(output_rows, columns=input_df.columns)
     return output_df
 
+
 def remove_rows_with_missing_values(input_df: pd.DataFrame) -> pd.DataFrame:
     output_df = input_df[~input_df.isna().any(axis=1)]
     return output_df
+
 
 def clean_df(input_df: pd.DataFrame) -> pd.DataFrame:
     input_df = remove_rows_with_errors(input_df)
     input_df = remove_duplicates_from_dataframe(input_df)
     input_df = remove_rows_with_missing_values(input_df)
     return input_df
+
+
 df = clean_df(df)
 check_duplicated(df)
 check_weird_values(df)
+
 
 def global_describe(input_data):
     """
@@ -227,8 +242,9 @@ def global_describe(input_data):
     }
 
     return global_desc
-all_columns = global_describe(df)
 
+
+all_columns = global_describe(df)
 
 
 def custom_describe(input_df: pd.DataFrame):
@@ -257,7 +273,8 @@ def custom_describe(input_df: pd.DataFrame):
             median = sorted_values[n // 2]
 
         # Standard Deviation
-        std_val = (sum((x - mean) ** 2 for x in sorted_values) / len(sorted_values)) ** 0.5
+        std_val = (sum((x - mean) ** 2 for x in sorted_values) /
+                   len(sorted_values)) ** 0.5
 
         # Quantiles
         quantiles = {
@@ -280,6 +297,7 @@ def custom_describe(input_df: pd.DataFrame):
 
     return result
 
+
 result_custom = custom_describe(df)
 result_default = df.describe().transpose()
 custom_stats = {}
@@ -287,30 +305,29 @@ for column, stats in result_custom.items():
     if column not in result_default.index:
         custom_stats[column] = stats
 with col1:
-     with st.expander("Data description", expanded=False):
-        st.write(all_columns)   
+    with st.expander("Data description", expanded=False):
+        st.write(all_columns)
 
 with col2:
-     with st.expander("Combined Describe Result", expanded=False):
-      st.subheader("Default Statistics (df.describe()):")
-      st.table(result_default)
+    with st.expander("Combined Describe Result", expanded=False):
+        st.subheader("Default Statistics (df.describe()):")
+        st.table(result_default)
 
-      st.subheader("Custom Statistics:")
-      for column, stats in custom_stats.items():
-          st.write(f"Column: {column}")
-          st.table(pd.DataFrame(stats).transpose())
-
-
+        st.subheader("Custom Statistics:")
+        for column, stats in custom_stats.items():
+            st.write(f"Column: {column}")
+            st.table(pd.DataFrame(stats).transpose())
 
 
+st.subheader("Data :blue[Visualization]")
 
-st.subheader("Data :blue[Visualization]") 
 
 class PlotType(Enum):
     BOX = 'Box Plot'
     HIST = 'Histogram'
     SCATTER = 'Scatter Plots'
-    
+
+
 def plottest(input_df, plot_types) -> None:
     for plot_type in plot_types:
         num_cols = len(input_df.columns)
@@ -333,9 +350,12 @@ def plottest(input_df, plot_types) -> None:
         plt.tight_layout()
         st.pyplot(fig)
 
-selected_plots = st.multiselect('Select Plot Types', [plot_type.value for plot_type in PlotType])
+
+selected_plots = st.multiselect(
+    'Select Plot Types', [plot_type.value for plot_type in PlotType])
 selected_plots = [PlotType(plot_type) for plot_type in selected_plots]
 plottest(df, selected_plots)
+
 
 def plot(input_df, *, plot_type: PlotType) -> None:
     num_cols = len(input_df.columns)
@@ -358,21 +378,24 @@ def plot(input_df, *, plot_type: PlotType) -> None:
     plt.tight_layout()
 
     st.pyplot(fig)
+
+
 form = st.form(key="my_form_2")
 
 with form:
     all_columns_option = 'all'
     columns_with_all = df.columns.insert(0, all_columns_option)
-    selected_columns = st.multiselect('Select Columns', columns_with_all, default=[all_columns_option])
-
+    selected_columns = st.multiselect(
+        'Select Columns', columns_with_all, default=[all_columns_option])
 
     if all_columns_option in selected_columns:
-         selected_columns = df.columns
-     
-    selected_plot_type = st.selectbox('Select Plot Type', [plot_type.value for plot_type in PlotType])
+        selected_columns = df.columns
+
+    selected_plot_type = st.selectbox(
+        'Select Plot Type', [plot_type.value for plot_type in PlotType])
 button_pressed = form.form_submit_button("Generate Plot")
 
- 
+
 df_selected = df[selected_columns]
 
 if button_pressed:
@@ -390,6 +413,7 @@ if button_pressed:
         fig = sns.pairplot(df_selected)
         st.pyplot(fig)
 
+
 def custom_describe(dataframe: pd.DataFrame) -> pd.DataFrame:
     return dataframe.describe()
 
@@ -405,7 +429,8 @@ def has_outliers(input_df: pd.DataFrame, *, threshold: float = 1.5) -> bool:
         lower_bound = q1 - threshold * iqr
         upper_bound = q3 + threshold * iqr
 
-        column_outliers = values[(values < lower_bound) | (values > upper_bound)].index.to_list()
+        column_outliers = values[(values < lower_bound) | (
+            values > upper_bound)].index.to_list()
 
         if column_outliers:
             return True
@@ -424,7 +449,8 @@ def detect_and_treat_outliers(dataframe: pd.DataFrame, *, threshold: float = 1.5
         lower_bound = q1 - threshold * iqr
         upper_bound = q3 + threshold * iqr
 
-        column_outliers = values[(values < lower_bound) | (values > upper_bound)].index.to_list()
+        column_outliers = values[(values < lower_bound) | (
+            values > upper_bound)].index.to_list()
 
         if show and column_outliers:
             print(f"Outliers in column '{column}': {column_outliers}")
@@ -433,12 +459,14 @@ def detect_and_treat_outliers(dataframe: pd.DataFrame, *, threshold: float = 1.5
         dataframe[column] = values
     return dataframe
 
-def treat_outliers(input_df : pd.DataFrame, show : bool = False) -> pd.DataFrame:
+
+def treat_outliers(input_df: pd.DataFrame, show: bool = False) -> pd.DataFrame:
     while True:
         df_without_outliers = detect_and_treat_outliers(input_df, show=show)
         if not has_outliers(df_without_outliers):
             return df_without_outliers
         input_df = df_without_outliers
+
 
 df = treat_outliers(df)
 
@@ -448,16 +476,17 @@ form = st.form(key="my_form_after")
 with form:
     all_columns_option = 'all'
     columns_with_all = df.columns.insert(0, all_columns_option)
-    selected_columns = st.multiselect('Select Columns', columns_with_all, default=[all_columns_option])
-
+    selected_columns = st.multiselect(
+        'Select Columns', columns_with_all, default=[all_columns_option])
 
     if all_columns_option in selected_columns:
-         selected_columns = df.columns
-     
-    selected_plot_type = st.selectbox('Select Plot Type', [plot_type.value for plot_type in PlotType])
+        selected_columns = df.columns
+
+    selected_plot_type = st.selectbox(
+        'Select Plot Type', [plot_type.value for plot_type in PlotType])
 button_pressed = form.form_submit_button("Generate Plot")
 
- 
+
 df_selected = df[selected_columns]
 
 if button_pressed:
@@ -475,7 +504,7 @@ if button_pressed:
         fig = sns.pairplot(df_selected)
         st.pyplot(fig)
 
-      
+
 def min_max_scaling(input_df):
     copy_df = input_df.copy()
     min_values = [input_df[column].min() for column in input_df.columns]
@@ -485,6 +514,8 @@ def min_max_scaling(input_df):
     return copy_df
 
 # Fonction de normalisation Z-score
+
+
 def z_score_normalization(input_df):
     copy_df = input_df.copy()
     means = [input_df[column].mean() for column in input_df.columns]
@@ -493,6 +524,8 @@ def z_score_normalization(input_df):
     return copy_df
 
 # Fonction pour le tracé des graphiques
+
+
 def plot_chart(df, plot_type, selected_columns):
     num_cols = len(selected_columns)
     fig, axes = plt.subplots(num_cols, 1, figsize=(8, 4 * num_cols))
@@ -512,15 +545,17 @@ def plot_chart(df, plot_type, selected_columns):
 
     plt.tight_layout()
     st.pyplot(fig)
-    
+
+
 st.subheader("Data Normalization and Visualization")
 
 
 with st.form("my_form"):
-    normalization_method = st.radio("Choose normalization method:", ('Min-Max Scaling', 'Z-score Normalization'))
-    plot_type = st.selectbox("Choose plot type:", ('Histogram', 'Scatter Plot', 'Box Plot'))
+    normalization_method = st.radio(
+        "Choose normalization method:", ('Min-Max Scaling', 'Z-score Normalization'))
+    plot_type = st.selectbox(
+        "Choose plot type:", ('Histogram', 'Scatter Plot', 'Box Plot'))
 
-  
     selected_columns = st.multiselect("Select columns:", df.columns)
 
     submit_button = st.form_submit_button(label='Generate')
@@ -533,10 +568,7 @@ if submit_button:
         df_normalized = z_score_normalization(df)
 
     if selected_columns:
-        plot_chart(df_normalized[selected_columns], plot_type, selected_columns)
+        plot_chart(df_normalized[selected_columns],
+                   plot_type, selected_columns)
     else:
         st.warning("Please select at least one column.")
-        
-        
-        
-

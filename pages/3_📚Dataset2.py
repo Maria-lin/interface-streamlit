@@ -1,3 +1,5 @@
+import base64
+import altair as alt
 import pandas as pd
 from pprint import pprint
 import seaborn as sns
@@ -11,14 +13,15 @@ import os
 import warnings
 import numpy as np
 warnings.filterwarnings('ignore')
-import altair as alt
-import base64
 
 
-st.set_page_config(page_title="Superstore!!!", page_icon=":bar_chart:",layout="wide")
+st.set_page_config(page_title="Superstore!!!",
+                   page_icon=":bar_chart:", layout="wide")
 
 st.title(" :bar_chart:  EDA")
-st.markdown('<style>div.block-container{padding-top:1rem;}</style>',unsafe_allow_html=True)
+st.markdown(
+    '<style>div.block-container{padding-top:1rem;}</style>', unsafe_allow_html=True)
+
 
 def add_bg_from_local(image_file):
     with open(image_file, "rb") as image_file:
@@ -38,49 +41,52 @@ def add_bg_from_local(image_file):
     )
 
 
-add_bg_from_local(r'C:\Users\user\OneDrive\Bureau\data_mining-master\data\huh.png')
+add_bg_from_local('data\huh.png')
 
 
-fl = st.file_uploader(":file_folder: Upload a file",type=(["csv","txt","xlsx","xls"]))
+fl = st.file_uploader(":file_folder: Upload a file",
+                      type=(["csv", "txt", "xlsx", "xls"]))
 if fl is not None:
     filename = fl.name
     st.write(filename)
-    df = pd.read_csv(filename, encoding = "ISO-8859-1")
+    df = pd.read_csv(filename, encoding="ISO-8859-1")
 else:
-    
-    df = pd.read_csv("data/Dataset2.csv", encoding = "ISO-8859-1")
+
+    df = pd.read_csv("data/Dataset2.csv", encoding="ISO-8859-1")
     st.subheader("Loaded Dataset")
 
 col1, col2 = st.columns((2))
-#col = st.columns((8.5,2), gap='medium')
-_, view4, dwn4 = st.columns([0.5,0.45,0.45])
+# col = st.columns((8.5,2), gap='medium')
+_, view4, dwn4 = st.columns([0.5, 0.45, 0.45])
 
 with col1:
-   
-   st.dataframe(df.head())
+
+    st.dataframe(df.head())
 
 with col2:
-    
 
-    
     with st.expander("Voir les informations du DataFrame"):
-      st.write("### Informations sur le DataFrame:")
-      st.write(df.info())
-    
+        st.write("### Informations sur le DataFrame:")
+        st.write(df.info())
+
     with st.expander('Remarque', expanded=False):
         st.write('''
             - :orange[**Missing/Values**]: we have some missing values in the columns 'test count', 'case count' and 'positive tests'
             - :orange[**type columns**]: we have two columns with type object that represents dates, we should transform them into time series
-            ''')   
+            ''')
 
     st.download_button("Get Data", data=df.to_csv().encode("utf-8"),
                        file_name="Dataset2.csv", mime="text/csv")
 
 
 df.dropna(inplace=True)
+
+
 def float_to_int(input_df: pd.DataFrame, columns: list[str]) -> pd.DataFrame:
     for column in columns:
         input_df[column] = input_df[column].astype(int)
+
+
 float_to_int(df, ['test count', 'case count', 'positive tests'])
 
 pprint(df['Start date'].unique())
@@ -93,7 +99,7 @@ col1, col2 = st.columns((2))
 with col1:
 
     missing_values_df = df['Start date'].unique()
-    
+
     with st.expander("start date ", expanded=False):
         # Format the DataFrame for better display
         formatted_missing_values_df = missing_values_df.copy()
@@ -108,7 +114,7 @@ with col1:
 with col2:
 
     missing_values_df = df['end date'].unique()
-    
+
     with st.expander("End date ", expanded=False):
 
         formatted_missing_values_df = missing_values_df.copy()
@@ -119,19 +125,20 @@ with col2:
             hide_index=True
         )
 
-st.write("we notice that :orange[**we have different format of dates**], we should fix that")
+st.write(
+    "we notice that :orange[**we have different format of dates**], we should fix that")
 
 
 st.divider()
 st.subheader('Scatter Plot of Case Count and Start Date Year')
 
 df['end date'] = pd.to_datetime(df['end date'], errors='coerce')
-df['year'] = df['end date'].dt.year 
+df['year'] = df['end date'].dt.year
 df = df.dropna(subset=['year'])
 df['year'] = df['year'].astype(int)
 df = df.sort_values('year')
 
-col1, col2 = st.columns((2)) # Ici, nous créons deux colonnes de largeur égale
+col1, col2 = st.columns((2))  # Ici, nous créons deux colonnes de largeur égale
 
 # Utilisation de la première colonne pour le graphique de dispersion
 with col1:
@@ -154,15 +161,16 @@ with col1:
         'height': 300,  # Ajuster la hauteur du graphique
         'title': 'Scatter Plot of Case Count and End Date Year',
     })
+
+
 def get_max_min_period_by_year(input_df: pd.DataFrame) -> pd.DataFrame:
     return input_df.groupby(pd.to_datetime(input_df['end date'], errors='coerce').dt.year).agg({'time_period': ['min', 'max']}).reset_index()
 
 
- 
 result_df = get_max_min_period_by_year(df)
 
 with col2:
-    
+
     with st.expander("Voir les périodes min et max par année"):
         st.write(result_df)
     with st.expander('About', expanded=False):
@@ -228,7 +236,8 @@ def transform_date(input_df: pd.DataFrame) -> pd.DataFrame:
 
         # Assign modified dates to DataFrame
         input_df.at[index, 'Start date'] = start_date
-        input_df.at[index, 'end date'] = end_date if not pd.isnull(end_date) else pd.NaT
+        input_df.at[index, 'end date'] = end_date if not pd.isnull(
+            end_date) else pd.NaT
 
     # Convert columns to datetime
     input_df['Start date'] = pd.to_datetime(input_df['Start date'])
@@ -241,31 +250,30 @@ st.divider()
 st.subheader("DataFrame transformé")
 col1, col2 = st.columns((2))
 
-with col1 : 
+with col1:
 
     transformed_df = transform_date(df)
-    
 
     with st.expander("View DataFrame transformé"):
-              st.write(transformed_df)
+        st.write(transformed_df)
 with col2:
-    
 
-    
     with st.expander("Voir les informations du DataFrame"):
-      st.write("### Informations sur le DataFrame:")
-      st.write(df.info)
-    
+        st.write("### Informations sur le DataFrame:")
+        st.write(df.info)
+
     with st.expander('Remarque', expanded=False):
         st.write('''
             - :orange[**Missing/Values**]: we have some missing values in the columns 'test count', 'case count' and 'positive tests'
             - :orange[**type columns**]: we have two columns with type object that represents dates, we should transform them into time series
-            ''')   
+            ''')
 
     st.download_button("Get Data", data=df.to_csv().encode("utf-8"),
                        file_name="Dataset2clean.csv", mime="text/csv")
 
 st.divider()
+
+
 def treat_data(input_df: pd.DataFrame) -> pd.DataFrame:
     input_df.drop_duplicates(inplace=True)
     input_df = input_df[input_df['test count'] >= input_df['positive tests']]
@@ -276,6 +284,7 @@ def treat_data(input_df: pd.DataFrame) -> pd.DataFrame:
 def regroup_data_by_date(input_df: pd.DataFrame) -> pd.DataFrame:
     return input_df.groupby(['Start date', 'end date']).agg({'test count': 'sum', 'case count': 'sum', 'positive tests': 'sum'}).reset_index()
 
+
 df = treat_data(df)
 df_by_date = regroup_data_by_date(df)
 
@@ -285,25 +294,28 @@ with st.expander("View Grouped Data (df_by_date)"):
     st.write(df_by_date)
 
 
-
-
 class PlotType(Enum):
     LINE = 'line plot'
     BOX = 'box plot'
 
+
 def plot(input_df, *, plot_type: PlotType) -> None:
     if plot_type == PlotType.LINE:
         fig, ax = plt.subplots()
-        sns.lineplot(x=input_df['Start date'], y=input_df['test count'], label='Tests', ax=ax)
-        sns.lineplot(x=input_df['Start date'], y=input_df['case count'], label='Confirmed Cases', ax=ax)
-        sns.lineplot(x=input_df['Start date'], y=input_df['positive tests'], label='Positive Tests', ax=ax)
+        sns.lineplot(x=input_df['Start date'],
+                     y=input_df['test count'], label='Tests', ax=ax)
+        sns.lineplot(
+            x=input_df['Start date'], y=input_df['case count'], label='Confirmed Cases', ax=ax)
+        sns.lineplot(
+            x=input_df['Start date'], y=input_df['positive tests'], label='Positive Tests', ax=ax)
         plt.xticks(rotation=45)
         plt.xlabel('Time')
         plt.ylabel('Count')
 
     elif plot_type == PlotType.BOX:
         fig, ax = plt.subplots()
-        sns.boxplot(data=input_df[['test count', 'case count', 'positive tests']], ax=ax)
+        sns.boxplot(
+            data=input_df[['test count', 'case count', 'positive tests']], ax=ax)
         plt.ylabel('Count')
 
     else:
@@ -315,13 +327,13 @@ def plot(input_df, *, plot_type: PlotType) -> None:
     # Afficher le plot dans Streamlit
     st.pyplot(fig)
 
+
 with st.form(key='my_form'):
     # Afficher le sous-titre
     st.subheader("Evolution of COVID-19 Tests and Cases Over Time")
 
-    
-    selected_plot_type = st.radio("Select Plot Type:", [PlotType.LINE, PlotType.BOX], format_func=lambda x: x.value)
-
+    selected_plot_type = st.radio("Select Plot Type:", [
+                                  PlotType.LINE, PlotType.BOX], format_func=lambda x: x.value)
 
     submitted = st.form_submit_button("Generate Plot")
 
@@ -329,14 +341,17 @@ with st.form(key='my_form'):
 if submitted:
     # Utiliser la fonction plot pour afficher le plot dans Streamlit
     plot(df_by_date, plot_type=selected_plot_type)
-    
-    
+
+
 def regroup_data_by_zone(input_df: pd.DataFrame) -> pd.DataFrame:
     return input_df.groupby(['zcta']).agg({'case count': 'sum', 'positive tests': 'sum'}).reset_index()
+
+
 df_by_zone = regroup_data_by_zone(df)
 
 
-melted_df = pd.melt(df_by_zone, id_vars='zcta', var_name='variable', value_name='value')
+melted_df = pd.melt(df_by_zone, id_vars='zcta',
+                    var_name='variable', value_name='value')
 
 chart = alt.Chart(melted_df).mark_bar().encode(
     x='zcta:N',
@@ -345,7 +360,7 @@ chart = alt.Chart(melted_df).mark_bar().encode(
     tooltip=['zcta', 'variable', 'value']
 ).properties(
     width=alt.Step(20),  # Adjust the width as needed
-   
+
 ).configure_axis(
     labelAngle=45
 ).interactive()
@@ -369,8 +384,7 @@ with col2:
         
     """)
     with st.expander("View DataFrame (df_by_zone)"):
-         st.write(df_by_zone)
-    
+        st.write(df_by_zone)
 
 
 st.subheader("Positive Tests Over Time")
@@ -378,18 +392,18 @@ chart_data = pd.DataFrame({
     "positive tests": df["positive tests"],
     "population": df["population"],
     "test count": df["test count"]
-    
+
 })
 
 st.line_chart(chart_data[["test count", "positive tests", "population"]])
 
 
-    
-def get_random_zone_df(input_df: pd.DataFrame, zone: int =None) -> pd.DataFrame:
-        if zone is None:
-          zone = input_df['zcta'].sample(1).values[0]
-        df_random_zone = input_df[input_df['zcta'] == zone]
-        return df_random_zone
+def get_random_zone_df(input_df: pd.DataFrame, zone: int = None) -> pd.DataFrame:
+    if zone is None:
+        zone = input_df['zcta'].sample(1).values[0]
+    df_random_zone = input_df[input_df['zcta'] == zone]
+    return df_random_zone
+
 
 def regroup_data_by_year(input_df: pd.DataFrame, zone=None) -> pd.DataFrame:
     df_random_zone = get_random_zone_df(input_df, zone)
@@ -398,23 +412,31 @@ def regroup_data_by_year(input_df: pd.DataFrame, zone=None) -> pd.DataFrame:
 
 def regroup_data_by_month(input_df: pd.DataFrame, zone=None) -> pd.DataFrame:
     df_random_zone = get_random_zone_df(input_df, zone)
-    input_df =  df_random_zone.resample('M', on='Start date').agg({'zcta': 'first', 'test count': 'sum', 'case count': 'sum', 'positive tests': 'sum'}).reset_index()
+    input_df = df_random_zone.resample('M', on='Start date').agg(
+        {'zcta': 'first', 'test count': 'sum', 'case count': 'sum', 'positive tests': 'sum'}).reset_index()
     return input_df[input_df['test count'] != 0]
+
 
 def regroup_data_by_week(input_df: pd.DataFrame, zone=None) -> pd.DataFrame:
     df_random_zone = get_random_zone_df(input_df, zone)
-    input_df =  df_random_zone.resample('W-Mon', on='Start date').agg({'zcta': 'first', 'test count': 'sum', 'case count': 'sum', 'positive tests': 'sum'}).reset_index()
+    input_df = df_random_zone.resample('W-Mon', on='Start date').agg(
+        {'zcta': 'first', 'test count': 'sum', 'case count': 'sum', 'positive tests': 'sum'}).reset_index()
     return input_df[input_df['test count'] != 0]
 
-df_year = regroup_data_by_year(df, 95129)   
+
+df_year = regroup_data_by_year(df, 95129)
 df_week = regroup_data_by_week(df, 95129)
 df_month = regroup_data_by_month(df, 95129)
 
+
 def plot_zone_data(input_df: pd.DataFrame, title: str) -> None:
     fig, ax = plt.subplots(figsize=(8, 4))  # Adjust the figsize as needed
-    sns.lineplot(x=input_df['Start date'], y=input_df['test count'], label='Tests', ax=ax)
-    sns.lineplot(x=input_df['Start date'], y=input_df['case count'], label='Confirmed Cases', ax=ax)
-    sns.lineplot(x=input_df['Start date'], y=input_df['positive tests'], label='Positive Tests', ax=ax)
+    sns.lineplot(x=input_df['Start date'],
+                 y=input_df['test count'], label='Tests', ax=ax)
+    sns.lineplot(x=input_df['Start date'],
+                 y=input_df['case count'], label='Confirmed Cases', ax=ax)
+    sns.lineplot(x=input_df['Start date'],
+                 y=input_df['positive tests'], label='Positive Tests', ax=ax)
 
     plt.xlabel('Period')
     plt.ylabel('Rate')
@@ -423,6 +445,8 @@ def plot_zone_data(input_df: pd.DataFrame, title: str) -> None:
     plt.legend()
 
     return fig
+
+
 st.subheader("COVID-19 Data Analysis")
 
 expander_general = st.expander("General Explanation")
@@ -437,7 +461,8 @@ with tabs[0]:
     expander_year = st.expander("Plot Details (Yearly)")
     with expander_year:
         st.write("Explanation for Yearly Data")
-        fig_year = plot_zone_data(df_year, f'Case and Positive Rates for {df_year["zcta"].values[0]}')
+        fig_year = plot_zone_data(
+            df_year, f'Case and Positive Rates for {df_year["zcta"].values[0]}')
         st.pyplot(fig_year)
 
 
@@ -446,7 +471,8 @@ with tabs[1]:
     expander_month = st.expander("Plot Details (Monthly)")
     with expander_month:
         st.write("Explanation for Monthly Data")
-        fig_month = plot_zone_data(df_month, f'Case and Positive Rates for {df_month["zcta"].values[0]}')
+        fig_month = plot_zone_data(
+            df_month, f'Case and Positive Rates for {df_month["zcta"].values[0]}')
         st.pyplot(fig_month)
 
 
@@ -455,20 +481,25 @@ with tabs[2]:
     expander_week = st.expander("Plot Details (Weekly)")
     with expander_week:
         st.write("Explanation for Weekly Data")
-        fig_week = plot_zone_data(df_week, f'Case and Positive Rates for {df_week["zcta"].values[0]}')
+        fig_week = plot_zone_data(
+            df_week, f'Case and Positive Rates for {df_week["zcta"].values[0]}')
         st.pyplot(fig_week)
-        
+
 st.divider()
 st.subheader("Positive Tests by Zone and Year")
-        
+
+
 def group_by_year_zone(input_df):
     return input_df.groupby([input_df['Start date'].dt.year, 'zcta']).agg({'positive tests': 'sum'}).reset_index()
 
-df_year_zone = group_by_year_zone(df)
-        
-pivot = df_year_zone.pivot(index='zcta', columns='Start date', values='positive tests')
 
-pivot_long = pivot.reset_index().melt(id_vars='zcta', var_name='Start date', value_name='positive tests')
+df_year_zone = group_by_year_zone(df)
+
+pivot = df_year_zone.pivot(
+    index='zcta', columns='Start date', values='positive tests')
+
+pivot_long = pivot.reset_index().melt(
+    id_vars='zcta', var_name='Start date', value_name='positive tests')
 
 chart = alt.Chart(pivot_long).mark_bar().encode(
     x='zcta:N',
@@ -476,15 +507,17 @@ chart = alt.Chart(pivot_long).mark_bar().encode(
     color='Start date:N',
     tooltip=['zcta', 'Start date', 'positive tests']
 ).properties(
-    width=alt.Step(20)  
+    width=alt.Step(20)
 ).configure_axis(
     labelAngle=45
 )
 
 st.altair_chart(chart, use_container_width=True)
 
+
 def population_by_zone(input_df: pd.DataFrame):
     return input_df.groupby(['zcta']).agg({'population': 'first', 'test count': 'sum'}).reset_index()
+
 
 df_population = population_by_zone(df)
 st.divider()
@@ -517,7 +550,6 @@ chart = alt.Chart(df_population).mark_circle().encode(
 st.altair_chart(chart, use_container_width=True)
 
 
-
 def get_most_affected_zones(input_df: pd.DataFrame) -> pd.DataFrame:
     return input_df.groupby(['zcta']).agg({'case count': 'sum'}).reset_index().sort_values(by='case count', ascending=False)
 
@@ -525,13 +557,15 @@ def get_most_affected_zones(input_df: pd.DataFrame) -> pd.DataFrame:
 def get_most_affected_zones_by_case_ratio(input_df: pd.DataFrame) -> pd.DataFrame:
     return input_df.groupby(['zcta']).agg({'case count': 'sum', 'test count': 'sum'}).reset_index().assign(ratio=lambda x: x['case count'] / x['test count']).sort_values(by='ratio', ascending=False)
 
+
 def get_most_affected_zones_by_positive_rate(input_df: pd.DataFrame) -> pd.DataFrame:
     return input_df.groupby(['zcta']).agg({'positive tests': 'sum', 'test count': 'sum'}).reset_index().assign(ratio=lambda x: x['positive tests'] / x['test count']).sort_values(by='ratio', ascending=False)
 
 
 st.subheader('Analysis of Most Affected Zones')
 
-analysis_type = st.selectbox("Select Analysis Type:", ["Most Affected Zones", "Case Ratio", "Positive Rate"])
+analysis_type = st.selectbox("Select Analysis Type:", [
+                             "Most Affected Zones", "Case Ratio", "Positive Rate"])
 
 # Perform analysis based on the selected type
 if analysis_type == "Most Affected Zones":
@@ -545,7 +579,8 @@ else:
 chart = alt.Chart(result_df).mark_bar().encode(
     x='zcta:N',
     y='case count:Q' if analysis_type == "Most Affected Zones" else 'ratio:Q',
-    tooltip=['zcta:N', 'case count:Q'] if analysis_type == "Most Affected Zones" else ['zcta:N', 'ratio:Q']
+    tooltip=['zcta:N', 'case count:Q'] if analysis_type == "Most Affected Zones" else [
+        'zcta:N', 'ratio:Q']
 ).properties(
     width=600,
     height=400,
@@ -556,10 +591,10 @@ chart = alt.Chart(result_df).mark_bar().encode(
 st.altair_chart(chart, use_container_width=True)
 
 
-
 def plot_most_affected_zone_by_case_count(input_df: pd.DataFrame, number_of_zones=None) -> None:
-    data = input_df.head(number_of_zones) if number_of_zones is not None else input_df
-    
+    data = input_df.head(
+        number_of_zones) if number_of_zones is not None else input_df
+
     chart = alt.Chart(data).mark_bar().encode(
         x=alt.X('zcta:N', sort='-y'),
         y=alt.Y('case count:Q'),
@@ -574,7 +609,8 @@ def plot_most_affected_zone_by_case_count(input_df: pd.DataFrame, number_of_zone
 
 
 st.subheader('Analysis of Most Affected Zones')
-number_of_zones = st.slider('Select Number of Zones:', min_value=1, max_value=len(df['zcta']), value=5)
+number_of_zones = st.slider(
+    'Select Number of Zones:', min_value=1, max_value=len(df['zcta']), value=5)
 
 most_affected_zones = get_most_affected_zones(df)
 

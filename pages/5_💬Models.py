@@ -7,7 +7,10 @@ from sklearn.decomposition import PCA
 from models.utils import Strategy
 from typing import get_args
 import base64
-st.set_page_config(page_title="Soil Sample Classification App", page_icon=":bar_chart:", layout="wide")
+st.set_page_config(page_title="Soil Sample Classification App",
+                   page_icon=":bar_chart:", layout="wide")
+
+
 def add_bg_from_local(image_file):
     with open(image_file, "rb") as image_file:
         encoded_string = base64.b64encode(image_file.read()).decode()
@@ -26,7 +29,7 @@ def add_bg_from_local(image_file):
     )
 
 
-add_bg_from_local(r'C:\Users\user\OneDrive\Bureau\data_mining-master\data\huh.png')
+add_bg_from_local('data\huh.png')
 
 
 st.title("Predicting Soil Sample Classification 😎")
@@ -169,7 +172,8 @@ models = {
 st.title("Soil Sample Classification App")
 
 # Model selection
-selected_model = st.selectbox("Select Model", list(models.keys()), on_change=st.session_state.clear)
+selected_model = st.selectbox("Select Model", list(
+    models.keys()), on_change=st.session_state.clear)
 
 # Params for each model
 
@@ -183,11 +187,13 @@ for param in models[selected_model]['params'].values():
             st.slider(label=param.get('label'), min_value=param.get('min'), max_value=param.get('max'),
                       value=param.get('default'), key=param.get('key'), step=param.get('step', 1))
         case 'select':
-            st.selectbox(label=param.get('label'), options=param.get('options'), key=param.get('key'))
+            st.selectbox(label=param.get('label'), options=param.get(
+                'options'), key=param.get('key'))
 
 # Model instantiation
 model = models[selected_model]
-model_instance = model['class'](**{param: st.session_state[param] for param in model['params']})
+model_instance = model['class'](
+    **{param: st.session_state[param] for param in model['params']})
 
 user_data = {
     'N': None,

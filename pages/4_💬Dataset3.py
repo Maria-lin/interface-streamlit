@@ -1,3 +1,9 @@
+import math
+import base64
+from itertools import combinations
+from collections import Counter
+from typing import Literal
+import altair as alt
 import pandas as pd
 from pprint import pprint
 import seaborn as sns
@@ -11,19 +17,14 @@ import os
 import warnings
 import numpy as np
 warnings.filterwarnings('ignore')
-import altair as alt
-import math 
-from typing import Literal
-from collections import Counter
-from itertools import combinations
-import base64
 
 
 data_dir = Path('../data')
 
 
+st.set_page_config(page_title="Dataset3!!!",
+                   page_icon=":bar_chart:", layout="wide")
 
-st.set_page_config(page_title="Dataset3!!!", page_icon=":bar_chart:",layout="wide")
 
 def add_bg_from_local(image_file):
     with open(image_file, "rb") as image_file:
@@ -43,62 +44,62 @@ def add_bg_from_local(image_file):
     )
 
 
-add_bg_from_local(r'C:\Users\user\OneDrive\Bureau\data_mining-master\data\huh.png')
-
+add_bg_from_local('data\huh.png')
 
 
 st.title(" :bar_chart: Apriori")
-st.markdown('<style>div.block-container{padding-top:1rem;}</style>',unsafe_allow_html=True)
+st.markdown(
+    '<style>div.block-container{padding-top:1rem;}</style>', unsafe_allow_html=True)
 
 
-
-fl = st.file_uploader(":file_folder: Upload a file",type=(["csv","txt","xlsx","xls"]))
+fl = st.file_uploader(":file_folder: Upload a file",
+                      type=(["csv", "txt", "xlsx", "xls"]))
 if fl is not None:
     filename = fl.name
     st.write(filename)
-    df = pd.read_csv(filename, encoding = "ISO-8859-1")
+    df = pd.read_csv(filename, encoding="ISO-8859-1")
 else:
-    
-    df = pd.read_csv("data/Dataset3.csv", encoding = "ISO-8859-1")
+
+    df = pd.read_csv("data/Dataset3.csv", encoding="ISO-8859-1")
     st.subheader("Loaded Dataset")
 
 col1, col2 = st.columns((2))
-#col = st.columns((8.5,2), gap='medium')
-_, view4, dwn4 = st.columns([0.5,0.45,0.45])
+# col = st.columns((8.5,2), gap='medium')
+_, view4, dwn4 = st.columns([0.5, 0.45, 0.45])
 
 with col1:
-   
-   st.dataframe(df.head())
+
+    st.dataframe(df.head())
 
 with col2:
-    
 
-    
     with st.expander("Voir les informations du DataFrame"):
-      st.write("### Informations sur le DataFrame:")
-      st.write(df.info())
+        st.write("### Informations sur le DataFrame:")
+        st.write(df.info())
     with st.expander("describe data"):
-      st.write("### Informations sur le DataFrame:")
-      st.write(df.describe())
+        st.write("### Informations sur le DataFrame:")
+        st.write(df.describe())
     with st.expander('Remarque', expanded=False):
         st.write('''
             - :orange[**Missing/Values**]: we have some missing values in the columns 'test count', 'case count' and 'positive tests'
             - :orange[**type columns**]: we have two columns with type object that represents dates, we should transform them into time series
-            ''')   
+            ''')
 
     st.download_button("Get Data", data=df.to_csv().encode("utf-8"),
                        file_name="Dataset3.csv", mime="text/csv")
 
 
-st.divider( )
+st.divider()
 
 
 discretize_column = 'Temperature'
+
+
 def discretize_equal_width(input_df, column, *, n_bins=0):
     input_df = input_df.copy()
     sorted_data = input_df[column].sort_values()
     if n_bins == 0:
-        n_bins =  int(1 + (10 / 3) * math.log10(len(sorted_data)))
+        n_bins = int(1 + (10 / 3) * math.log10(len(sorted_data)))
     ranges = np.linspace(sorted_data.min(), sorted_data.max(), n_bins + 1)
     labels = [str(i) for i in range(1, n_bins + 1)]
     current_bin = 0
@@ -110,6 +111,7 @@ def discretize_equal_width(input_df, column, *, n_bins=0):
     input_df[f'class_{column}'] = class_column
     return input_df
 
+
 def plot_classes(input_df, column=f'class_{discretize_column}'):
     chart = alt.Chart(input_df).mark_bar().encode(
         x=alt.X(column, title='Classes'),
@@ -118,6 +120,8 @@ def plot_classes(input_df, column=f'class_{discretize_column}'):
         title='Class Distribution'
     )
     return chart
+
+
 def discretize_equal_freq(input_df, column, *, n_bins=0):
     input_df = input_df.copy()
 
@@ -126,7 +130,8 @@ def discretize_equal_freq(input_df, column, *, n_bins=0):
 
     sorted_values = sorted(input_df[column])
 
-    bin_edges = [sorted_values[i * len(sorted_values) // n_bins] for i in range(n_bins)]
+    bin_edges = [sorted_values[i * len(sorted_values) // n_bins]
+                 for i in range(n_bins)]
     bin_edges.append(sorted_values[-1])  # Include the maximum value
     labels = [str(i) for i in range(1, n_bins + 1)]
 
@@ -146,8 +151,6 @@ def discretize_equal_freq(input_df, column, *, n_bins=0):
 st.subheader('Equal Width/Frequency Discretization and Class Distribution')
 
 
-
-
 discretize_column = 'Temperature'
 df_width = discretize_equal_width(df, discretize_column)
 
@@ -159,24 +162,28 @@ col1, col2 = st.columns(2)
 
 
 with st.expander("Equal Width Discretization"):
-    
-    st.dataframe(df_width.head())  
+
+    st.dataframe(df_width.head())
     st.altair_chart(plot_classes(df_width), use_container_width=True)
 
 
 with st.expander("Equal Frequency Discretization"):
-    
-    st.dataframe(df_freq.head()) 
-    st.altair_chart(plot_classes(df_freq, f'class_{discretize_column}'), use_container_width=True)
-    
+
+    st.dataframe(df_freq.head())
+    st.altair_chart(plot_classes(
+        df_freq, f'class_{discretize_column}'), use_container_width=True)
+
 st.divider()
+
 
 def get_grouped_df(input_df, columns=None):
     if columns is None:
         columns = ['Soil', 'Fertilizer', 'Crop']
     return input_df.groupby(columns).agg({
         f'class_{discretize_column}': set,
-        }).rename(columns={f'class_{discretize_column}': 'Items'})
+    }).rename(columns={f'class_{discretize_column}': 'Items'})
+
+
 grouped_df = get_grouped_df(df_width)
 grouped_df.to_csv('data/part3_grouped_df.csv')
 
@@ -186,9 +193,10 @@ with st.expander("Grouped DataFrame"):
     st.dataframe(get_grouped_df(df_width))
 
 
-
 class Apriori:
-    Metric = Literal['confidence', 'cosine', 'lift', 'all_confidence', 'max_confidence', 'jaccard', 'kulczynski']
+    Metric = Literal['confidence', 'cosine', 'lift',
+                     'all_confidence', 'max_confidence', 'jaccard', 'kulczynski']
+
     def __init__(self, min_support, min_confidence):
         self.df = None
         self.min_support = min_support
@@ -253,7 +261,8 @@ class Apriori:
                 for antecedent in self._get_antecedents(itemset):
                     antecedent_support = self._get_support(antecedent)
                     if support / antecedent_support >= self.min_confidence:
-                        self.rules.append((antecedent, itemset - antecedent, support / antecedent_support))
+                        self.rules.append(
+                            (antecedent, itemset - antecedent, support / antecedent_support))
         return self.rules
 
     @staticmethod
@@ -261,7 +270,8 @@ class Apriori:
         antecedents = []
         for i in range(1, len(itemset)):
             current_antecedents = combinations(itemset, i)
-            current_antecedents = {frozenset(antecedent) for antecedent in current_antecedents}
+            current_antecedents = {frozenset(antecedent)
+                                   for antecedent in current_antecedents}
             antecedents.extend(current_antecedents)
         return antecedents
 
@@ -271,7 +281,8 @@ class Apriori:
     def _get_cosines(self):
         self.cosines = []
         for itemset1, consequent, confidence in self.rules:
-            cosine = self._get_support(itemset1 | consequent) / math.sqrt(self._get_support(itemset1) * self._get_support(consequent))
+            cosine = self._get_support(itemset1 | consequent) / math.sqrt(
+                self._get_support(itemset1) * self._get_support(consequent))
             self.cosines.append((itemset1, consequent, cosine))
         return self.cosines
 
@@ -282,11 +293,11 @@ class Apriori:
             self.lifts.append((itemset1, consequent, lift))
         return self.lifts
 
-
     def _get_jaccard(self):
         self.jaccard = []
         for itemset1, consequent, confidence in self.rules:
-            jaccard = self._get_support(itemset1 | consequent) / (self._get_support(itemset1) + self._get_support(consequent) - self._get_support(itemset1 | consequent))
+            jaccard = self._get_support(itemset1 | consequent) / (self._get_support(
+                itemset1) + self._get_support(consequent) - self._get_support(itemset1 | consequent))
             self.jaccard.append((itemset1, consequent, jaccard))
         return self.jaccard
 
@@ -294,7 +305,8 @@ class Apriori:
         self.kulczynski = []
         for itemset1, consequent, confidence in self.rules:
             join_support = self._get_support(itemset1 | consequent)
-            kulczynski = ((join_support / self._get_support(itemset1)) + (join_support / self._get_support(consequent))) / 2
+            kulczynski = ((join_support / self._get_support(itemset1)) +
+                          (join_support / self._get_support(consequent))) / 2
             self.kulczynski.append((itemset1, consequent, kulczynski))
         return self.kulczynski
 
@@ -302,14 +314,16 @@ class Apriori:
         self.max_confidence = []
         for itemset1, consequent, confidence in self.rules:
             join_support = self._get_support(itemset1 | consequent)
-            max_confidence = max(self._get_support(itemset1) / join_support, self._get_support(consequent) / join_support)
+            max_confidence = max(self._get_support(
+                itemset1) / join_support, self._get_support(consequent) / join_support)
             self.max_confidence.append((itemset1, consequent, max_confidence))
         return self.max_confidence
 
     def _get_all_confidence(self):
         self.all_confidence = []
         for itemset1, consequent, confidence in self.rules:
-            all_confidence = self._get_support(itemset1 | consequent) / max(self._get_support(itemset1), self._get_support(consequent))
+            all_confidence = self._get_support(
+                itemset1 | consequent) / max(self._get_support(itemset1), self._get_support(consequent))
             self.all_confidence.append((itemset1, consequent, all_confidence))
         return self.all_confidence
 
@@ -327,8 +341,8 @@ class Apriori:
         if metric in sorting_functions:
             return sorting_functions[metric]()[:n_rules]
         else:
-            raise ValueError(f'metric should be one of {", ".join(sorting_functions.keys())}')
-
+            raise ValueError(
+                f'metric should be one of {", ".join(sorting_functions.keys())}')
 
     def predict(self, items: list[str], *, metric: Metric = 'confidence'):
         prediction_functions = {
@@ -344,7 +358,8 @@ class Apriori:
         if metric in prediction_functions:
             return prediction_functions[metric](items)
         else:
-            raise ValueError(f'metric should be one of {", ".join(prediction_functions.keys())}')
+            raise ValueError(
+                f'metric should be one of {", ".join(prediction_functions.keys())}')
 
     def _predict_confidence(self, items: list[str]):
         items = set(items)
@@ -354,7 +369,6 @@ class Apriori:
                 predictions.append((consequent, confidence))
         return sorted(predictions, key=lambda x: x[1], reverse=True)
 
-
     def _predict_cosine(self, items: list[str]):
         items = set(items)
         predictions = []
@@ -362,7 +376,6 @@ class Apriori:
             if itemset1 == items:
                 predictions.append((consequent, cosine))
         return sorted(predictions, key=lambda x: x[1], reverse=True)
-
 
     def _predict_lift(self, items: list[str]):
         items = set(items)
@@ -372,7 +385,6 @@ class Apriori:
                 predictions.append((consequent, lift))
         return sorted(predictions, key=lambda x: x[1], reverse=True)
 
-
     def _predict_all_confidence(self, items: list[str]):
         items = set(items)
         predictions = []
@@ -380,7 +392,6 @@ class Apriori:
             if itemset1 == items:
                 predictions.append((consequent, all_confidence))
         return sorted(predictions, key=lambda x: x[1], reverse=True)
-
 
     def _predict_jaccard(self, items: list[str]):
         items = set(items)
@@ -390,7 +401,6 @@ class Apriori:
                 predictions.append((consequent, jaccard))
         return sorted(predictions, key=lambda x: x[1], reverse=True)
 
-
     def _predict_kulczynski(self, items: list[str]):
         items = set(items)
         predictions = []
@@ -398,7 +408,6 @@ class Apriori:
             if itemset1 == items:
                 predictions.append((consequent, kulczynski))
         return sorted(predictions, key=lambda x: x[1], reverse=True)
-
 
     def _predict_max_confidence(self, items: list[str]):
         items = set(items)
@@ -408,6 +417,7 @@ class Apriori:
                 predictions.append((consequent, max_confidence))
         return sorted(predictions, key=lambda x: x[1], reverse=True)
 
+
 apriori = Apriori(min_support=0.4, min_confidence=0.8)
 
 st.subheader("Apriori Algorithm Interface")
@@ -416,8 +426,8 @@ st.subheader("Apriori Algorithm Interface")
 with st.form(key='algorithm_parameters'):
     st.subheader("Algorithm Parameters")
     min_support = st.slider("Minimum Support", 0.1, 1.0, apriori.min_support)
-    min_confidence = st.slider("Minimum Confidence", 0.1, 1.0, apriori.min_confidence)
-
+    min_confidence = st.slider(
+        "Minimum Confidence", 0.1, 1.0, apriori.min_confidence)
 
     apriori.set_params(min_support=min_support, min_confidence=min_confidence)
 
@@ -439,7 +449,8 @@ if submit_button:
 
     # Form for choosing the metric
     with st.form(key='metric_selection'):
-        metric = st.selectbox("Select Metric", ['confidence', 'cosine', 'lift', 'all_confidence', 'jaccard', 'kulczynski', 'max_confidence'])
+        metric = st.selectbox("Select Metric", [
+                              'confidence', 'cosine', 'lift', 'all_confidence', 'jaccard', 'kulczynski', 'max_confidence'])
         n_rules = st.slider("Number of Rules to Display", 1, 20, 2)
 
         submit_metric_button = st.form_submit_button(label='Show Strong Rules')
