@@ -1,18 +1,12 @@
 import base64
 import altair as alt
 import pandas as pd
-from pprint import pprint
 import seaborn as sns
-from pathlib import Path
 from datetime import datetime
 from enum import Enum
 import matplotlib.pyplot as plt
 import streamlit as st
 import plotly.express as px
-import os
-import warnings
-import numpy as np
-warnings.filterwarnings('ignore')
 
 
 st.set_page_config(page_title="Superstore!!!",
@@ -44,32 +38,23 @@ def add_bg_from_local(image_file):
 add_bg_from_local('data\huh.png')
 
 
-fl = st.file_uploader(":file_folder: Upload a file",
-                      type=(["csv", "txt", "xlsx", "xls"]))
-if fl is not None:
-    filename = fl.name
-    st.write(filename)
-    df = pd.read_csv(filename, encoding="ISO-8859-1")
-else:
-
-    df = pd.read_csv("data/Dataset2.csv", encoding="ISO-8859-1")
-    st.subheader("Loaded Dataset")
+df = pd.read_csv("data/Dataset2.csv", encoding="ISO-8859-1")
+st.subheader("Loaded Dataset")
 
 col1, col2 = st.columns((2))
 # col = st.columns((8.5,2), gap='medium')
 _, view4, dwn4 = st.columns([0.5, 0.45, 0.45])
 
 with col1:
-
-    st.dataframe(df.head())
+    st.dataframe(df)
 
 with col2:
 
-    with st.expander("Voir les informations du DataFrame"):
-        st.write("### Informations sur le DataFrame:")
-        st.write(df.info())
+    with st.expander("Data overview", expanded=True):
+        st.write("Rows:", df.shape[0])
+        st.write("Columns:", df.shape[1])
 
-    with st.expander('Remarque', expanded=False):
+    with st.expander('Remarque', expanded=True):
         st.write('''
             - :orange[**Missing/Values**]: we have some missing values in the columns 'test count', 'case count' and 'positive tests'
             - :orange[**type columns**]: we have two columns with type object that represents dates, we should transform them into time series
@@ -89,11 +74,9 @@ def float_to_int(input_df: pd.DataFrame, columns: list[str]) -> pd.DataFrame:
 
 float_to_int(df, ['test count', 'case count', 'positive tests'])
 
-pprint(df['Start date'].unique())
-
 
 st.divider()
-st.subheader('Number of :blue[ empty values ] in each column:')
+st.subheader('Start and end :blue[ dates ]:')
 col1, col2 = st.columns((2))
 
 with col1:
@@ -132,17 +115,18 @@ st.write(
 st.divider()
 st.subheader('Scatter Plot of Case Count and Start Date Year')
 
-df['end date'] = pd.to_datetime(df['end date'], errors='coerce')
-df['year'] = df['end date'].dt.year
-df = df.dropna(subset=['year'])
-df['year'] = df['year'].astype(int)
-df = df.sort_values('year')
+df_data = df.copy()
+df_data['end date'] = pd.to_datetime(df_data['end date'], errors='coerce')
+df_data['year'] = df_data['end date'].dt.year
+df_data = df_data.dropna(subset=['year'])
+df_data['year'] = df_data['year'].astype(int)
+df_data = df_data.sort_values('year')
 
 col1, col2 = st.columns((2))  # Ici, nous créons deux colonnes de largeur égale
 
 # Utilisation de la première colonne pour le graphique de dispersion
 with col1:
-    st.vega_lite_chart(df, {
+    st.vega_lite_chart(df_data, {
         'mark': {
             'type': 'circle',
             'tooltip': True,
@@ -167,13 +151,11 @@ def get_max_min_period_by_year(input_df: pd.DataFrame) -> pd.DataFrame:
     return input_df.groupby(pd.to_datetime(input_df['end date'], errors='coerce').dt.year).agg({'time_period': ['min', 'max']}).reset_index()
 
 
-result_df = get_max_min_period_by_year(df)
+result_df = get_max_min_period_by_year(df_data)
 
 with col2:
 
-    with st.expander("Voir les périodes min et max par année"):
-        st.write(result_df)
-    with st.expander('About', expanded=False):
+    with st.expander('What we noticed', expanded=True):
         st.write('''
                  
             We can notice that :blue[the year of the start date is related to the time period], so we can fix the dates by adding the current year to the date corresponding to the time period
@@ -182,10 +164,14 @@ with col2:
             - 35-53 days => :orange[**2021**]
             - 53-155 days => :orange[**2022**]
             ''')
-df.info()
 
 
 def transform_date(input_df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Fix dates that has different formats (e.g. 1-Jan-20, 1-Jan-2020, 1/1/2020) or has no year (e.g. 1-Jan)
+    :param input_df:
+    :return:
+    """
     def time_period_to_year(time_period: int) -> int:
         if time_period <= 20:
             return 2019
@@ -197,52 +183,22 @@ def transform_date(input_df: pd.DataFrame) -> pd.DataFrame:
             return 2022
 
     for index, row in input_df.iterrows():
-        print(row['Start date'])
         try:
             start_date = datetime.strptime(row['Start date'], '%m/%d/%Y')
-
-            # Create a copy of 'end date' before modifying anything
-            end_date = row['end date']
-
-            # Check if 'end date' is a string and not None before using strptime
-            if not pd.isnull(end_date) and isinstance(end_date, str):
-                end_date = datetime.strptime(end_date, '%m/%d/%Y')
-
-            # Check if end_date is not None before using month attribute
-            if not pd.isnull(end_date):
-                new_year = time_period_to_year(row['time_period'])
-                start_date = start_date.replace(year=new_year)
-
-                if end_date.month < start_date.month:
-                    end_date = end_date.replace(year=new_year + 1)
-
+            end_date = datetime.strptime(row['end date'], '%m/%d/%Y')
         except ValueError:
             start_date = datetime.strptime(row['Start date'], '%d-%b')
-
-            # Create a copy of 'end date' before modifying anything
-            end_date = row['end date']
-
-            # Check if 'end date' is a string and not None before using strptime
-            if not pd.isnull(end_date) and isinstance(end_date, str):
-                end_date = datetime.strptime(end_date, '%d-%b')
-
+            end_date = datetime.strptime(row['end date'], '%d-%b')
             new_year = time_period_to_year(row['time_period'])
             start_date = start_date.replace(year=new_year)
+            end_date = end_date.replace(
+                year=new_year) if end_date.month >= start_date.month else end_date.replace(year=new_year + 1)
 
-            # Check if end_date is not None before using month attribute
-            if not pd.isnull(end_date):
-                if end_date.month < start_date.month:
-                    end_date = end_date.replace(year=new_year + 1)
-
-        # Assign modified dates to DataFrame
         input_df.at[index, 'Start date'] = start_date
-        input_df.at[index, 'end date'] = end_date if not pd.isnull(
-            end_date) else pd.NaT
+        input_df.at[index, 'end date'] = end_date
 
-    # Convert columns to datetime
     input_df['Start date'] = pd.to_datetime(input_df['Start date'])
     input_df['end date'] = pd.to_datetime(input_df['end date'])
-
     return input_df
 
 
@@ -254,22 +210,14 @@ with col1:
 
     transformed_df = transform_date(df)
 
-    with st.expander("View DataFrame transformé"):
-        st.write(transformed_df)
+    with st.expander("View DataFrame transformé", expanded=True):
+        st.dataframe(transformed_df)
 with col2:
-
-    with st.expander("Voir les informations du DataFrame"):
-        st.write("### Informations sur le DataFrame:")
-        st.write(df.info)
-
-    with st.expander('Remarque', expanded=False):
+    with st.expander('Remarque', expanded=True):
         st.write('''
             - :orange[**Missing/Values**]: we have some missing values in the columns 'test count', 'case count' and 'positive tests'
             - :orange[**type columns**]: we have two columns with type object that represents dates, we should transform them into time series
             ''')
-
-    st.download_button("Get Data", data=df.to_csv().encode("utf-8"),
-                       file_name="Dataset2clean.csv", mime="text/csv")
 
 st.divider()
 
@@ -290,8 +238,7 @@ df_by_date = regroup_data_by_date(df)
 
 st.subheader('Data Grouped by Date')
 
-with st.expander("View Grouped Data (df_by_date)"):
-    st.write(df_by_date)
+st.dataframe(df_by_date)
 
 
 class PlotType(Enum):
@@ -336,11 +283,9 @@ with st.form(key='my_form'):
                                   PlotType.LINE, PlotType.BOX], format_func=lambda x: x.value)
 
     submitted = st.form_submit_button("Generate Plot")
-
-
-if submitted:
-    # Utiliser la fonction plot pour afficher le plot dans Streamlit
-    plot(df_by_date, plot_type=selected_plot_type)
+    if submitted:
+        with st.expander("Evolution of COVID-19 Tests and Cases Over Time"):
+            plot(df_by_date, plot_type=selected_plot_type)
 
 
 def regroup_data_by_zone(input_df: pd.DataFrame) -> pd.DataFrame:
@@ -353,22 +298,13 @@ df_by_zone = regroup_data_by_zone(df)
 melted_df = pd.melt(df_by_zone, id_vars='zcta',
                     var_name='variable', value_name='value')
 
-chart = alt.Chart(melted_df).mark_bar().encode(
-    x='zcta:N',
-    y='value:Q',
-    color='variable:N',
-    tooltip=['zcta', 'variable', 'value']
-).properties(
-    width=alt.Step(20),  # Adjust the width as needed
-
-).configure_axis(
-    labelAngle=45
-).interactive()
+chart = px.bar(melted_df, x='zcta', y='value', color='variable',
+               barmode='group', title='Distribution of COVID-19 Tests and Cases by Zone')
 st.divider()
 col1, col2 = st.columns(2)
 with col1:
     st.subheader('Distribution of COVID-19 Tests and Cases by Zone')
-    st.altair_chart(chart, use_container_width=True)
+    st.plotly_chart(chart, use_container_width=True)
 with col2:
 
     st.markdown("""
@@ -446,13 +382,6 @@ def plot_zone_data(input_df: pd.DataFrame, title: str) -> None:
 
     return fig
 
-
-st.subheader("COVID-19 Data Analysis")
-
-expander_general = st.expander("General Explanation")
-with expander_general:
-    st.write("This is a general explanation of the code.")
-st.divider()
 
 tabs = st.tabs(["Yearly Data", "Monthly Data", "Weekly Data"])
 
