@@ -16,17 +16,40 @@ import math
 from typing import Literal
 from collections import Counter
 from itertools import combinations
-
+import base64
 
 
 data_dir = Path('../data')
 
 
 
-st.set_page_config(page_title="Superstore!!!", page_icon=":bar_chart:",layout="wide")
+st.set_page_config(page_title="Dataset3!!!", page_icon=":bar_chart:",layout="wide")
 
-st.title(" :bar_chart: Sample SuperStore EDA")
+def add_bg_from_local(image_file):
+    with open(image_file, "rb") as image_file:
+        encoded_string = base64.b64encode(image_file.read()).decode()
+    st.markdown(
+        f"""
+        <style>
+        .stApp {{
+            background-image: url("data:image/png;base64,{encoded_string}");
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+        }}
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+
+
+add_bg_from_local(r'C:\Users\user\OneDrive\Bureau\data_mining-master\data\huh.png')
+
+
+
+st.title(" :bar_chart: Apriori")
 st.markdown('<style>div.block-container{padding-top:1rem;}</style>',unsafe_allow_html=True)
+
 
 
 fl = st.file_uploader(":file_folder: Upload a file",type=(["csv","txt","xlsx","xls"]))

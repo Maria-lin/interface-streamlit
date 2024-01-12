@@ -8,17 +8,38 @@ import numpy as np
 from collections import Counter
 from pprint import pprint
 from matplotlib import pyplot as plt
+import matplotlib.pyplot as plt
 import seaborn as sns
 from enum import Enum
 from pathlib import Path
 import altair as alt
-import math
+import base64
+import streamlit.components.v1 as components
 st.set_page_config(page_title="Data Exploration Dashboard", page_icon=":chart_with_upwards_trend:", layout="wide")
-st.title("Data Exploration Dashboard")
+st.title(" 	:bar_chart: Data Exploration ")
 st.markdown('<style>div.block-container{padding-top:1rem;}</style>',unsafe_allow_html=True)
 alt.themes.enable("dark")
 
 
+def add_bg_from_local(image_file):
+    with open(image_file, "rb") as image_file:
+        encoded_string = base64.b64encode(image_file.read()).decode()
+    st.markdown(
+        f"""
+        <style>
+        .stApp {{
+            background-image: url("data:image/png;base64,{encoded_string}");
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+        }}
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+
+# Ajout de l'image de fond
+add_bg_from_local(r'C:\Users\user\OneDrive\Bureau\data_mining-master\data\huh.png')
 
 
 fl = st.file_uploader(":file_folder: Upload a file",type=(["csv","txt","xlsx","xls"]))
@@ -55,23 +76,33 @@ df_numeric = df.apply(pd.to_numeric, errors='coerce')
 
 df_filled = df_numeric.fillna(0)
 
-correlation_matrix = df_filled.corr()
+np.random.seed(42)
+correlation_matrix = np.random.rand(10, 10)
 
+
+st.divider()
+st.subheader('Distribution :blue[ Analysis ] ')
 col1, col2 = st.columns((2))
 
-with col1: 
-    st.subheader("Correlation Matrix Heatmap")
-    plt.figure(figsize=(10, 4))  
-    sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', linewidths=.5)
-    st.pyplot(plt)
+with col1 : 
+    with st.expander("Correlation Matrix Heatmap"):
+        plt.figure(figsize=(10, 4))
+        sns.heatmap(correlation_matrix, annot=True, cmap="YlGnBu", linewidths=.5, fmt=".2f", cbar_kws={"shrink": 0.75}, cbar=None)
+        plt.title("Customized Heatmap")
+        plt.xlabel("X Axis Label")
+        plt.ylabel("Y Axis Label")
+        st.pyplot(plt)
 
-with col2: 
-   fig, ax = plt.subplots(figsize=(10, 4))
-   st.subheader('Distribution of pH')
-   sns.histplot(df['pH'], kde=True, ax=ax)
-   ax.set_xlabel('pH Value')
-   ax.set_ylabel('Frequency')
-   st.pyplot(fig)
+
+with col2 : 
+     with st.expander("Distribution Plot"):
+         st.subheader('Select a column for distribution plot:')
+         selected_column = st.selectbox("Select Column", df.columns)
+     
+         # Plot distribution using Streamlit's chart functions
+         st.subheader(f'Distribution of {selected_column}')
+         st.line_chart(df[selected_column].value_counts())
+         st.bar_chart(df[selected_column].value_counts())
 
     
 def check_weird_values(data):

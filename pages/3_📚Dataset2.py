@@ -12,13 +12,33 @@ import warnings
 import numpy as np
 warnings.filterwarnings('ignore')
 import altair as alt
-
+import base64
 
 
 st.set_page_config(page_title="Superstore!!!", page_icon=":bar_chart:",layout="wide")
 
 st.title(" :bar_chart:  EDA")
 st.markdown('<style>div.block-container{padding-top:1rem;}</style>',unsafe_allow_html=True)
+
+def add_bg_from_local(image_file):
+    with open(image_file, "rb") as image_file:
+        encoded_string = base64.b64encode(image_file.read()).decode()
+    st.markdown(
+        f"""
+        <style>
+        .stApp {{
+            background-image: url("data:image/png;base64,{encoded_string}");
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+        }}
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+
+
+add_bg_from_local(r'C:\Users\user\OneDrive\Bureau\data_mining-master\data\huh.png')
 
 
 fl = st.file_uploader(":file_folder: Upload a file",type=(["csv","txt","xlsx","xls"]))
@@ -84,6 +104,7 @@ with col1:
             hide_index=True
         )
 
+
 with col2:
 
     missing_values_df = df['end date'].unique()
@@ -104,25 +125,35 @@ st.write("we notice that :orange[**we have different format of dates**], we shou
 st.divider()
 st.subheader('Scatter Plot of Case Count and Start Date Year')
 
-col1, col2 = st.columns((2))
+df['end date'] = pd.to_datetime(df['end date'], errors='coerce')
+df['year'] = df['end date'].dt.year 
+df = df.dropna(subset=['year'])
+df['year'] = df['year'].astype(int)
+df = df.sort_values('year')
 
+col1, col2 = st.columns((2)) # Ici, nous créons deux colonnes de largeur égale
 
-with col1: 
-
-
-         df['end date'] = pd.to_datetime(df['end date'], errors='coerce')
-
-         chart = alt.Chart(df).mark_circle().encode(
-         x='time_period:Q',
-         y='year(end date):O', 
-         tooltip=['year(end date):O', 'time_period:Q']
-         ).properties(
-         width=600,
-         height=400,
-         title='Scatter Plot of Case Count and Start Date Year'
-         )
-         st.altair_chart(chart, use_container_width=True)
-
+# Utilisation de la première colonne pour le graphique de dispersion
+with col1:
+    st.vega_lite_chart(df, {
+        'mark': {
+            'type': 'circle',
+            'tooltip': True,
+            'size': 10  # Ajuster la taille des points ici, la valeur est arbitraire
+        },
+        'encoding': {
+            'x': {'field': 'time_period', 'type': 'quantitative', 'title': 'Case Count'},
+            'y': {
+                'field': 'year',
+                'type': 'ordinal',
+                'title': 'Year',
+                'sort': 'ascending'  # Assurez-vous que les années sont triées en ordre croissant
+            }
+        },
+        'width': 300,  # Ajuster la largeur du graphique
+        'height': 300,  # Ajuster la hauteur du graphique
+        'title': 'Scatter Plot of Case Count and End Date Year',
+    })
 def get_max_min_period_by_year(input_df: pd.DataFrame) -> pd.DataFrame:
     return input_df.groupby(pd.to_datetime(input_df['end date'], errors='coerce').dt.year).agg({'time_period': ['min', 'max']}).reset_index()
 
@@ -340,14 +371,19 @@ with col2:
     with st.expander("View DataFrame (df_by_zone)"):
          st.write(df_by_zone)
     
-st.header("Positive Tests Over Time")
 
-chart_data = pd.DataFrame(np.random.randn(20, 3), columns=["positive tests", "Time_period", "population"])
 
-st.area_chart(
-   chart_data, x="population", y=["positive tests", "Time_period"])
+st.subheader("Positive Tests Over Time")
+chart_data = pd.DataFrame({
+    "positive tests": df["positive tests"],
+    "population": df["population"],
+    "test count": df["test count"]
     
-    
+})
+
+st.line_chart(chart_data[["test count", "positive tests", "population"]])
+
+
     
 def get_random_zone_df(input_df: pd.DataFrame, zone: int =None) -> pd.DataFrame:
         if zone is None:
@@ -389,15 +425,13 @@ def plot_zone_data(input_df: pd.DataFrame, title: str) -> None:
     return fig
 st.subheader("COVID-19 Data Analysis")
 
-# Expander pour l'explication générale
 expander_general = st.expander("General Explanation")
 with expander_general:
     st.write("This is a general explanation of the code.")
+st.divider()
 
-# Onglets pour les données
 tabs = st.tabs(["Yearly Data", "Monthly Data", "Weekly Data"])
 
-# Onglet pour l'année
 with tabs[0]:
     st.header("Yearly Data")
     expander_year = st.expander("Plot Details (Yearly)")
@@ -406,7 +440,7 @@ with tabs[0]:
         fig_year = plot_zone_data(df_year, f'Case and Positive Rates for {df_year["zcta"].values[0]}')
         st.pyplot(fig_year)
 
-# Onglet pour le mois
+
 with tabs[1]:
     st.header("Monthly Data")
     expander_month = st.expander("Plot Details (Monthly)")
@@ -415,7 +449,7 @@ with tabs[1]:
         fig_month = plot_zone_data(df_month, f'Case and Positive Rates for {df_month["zcta"].values[0]}')
         st.pyplot(fig_month)
 
-# Onglet pour la semaine
+
 with tabs[2]:
     st.header("Weekly Data")
     expander_week = st.expander("Plot Details (Weekly)")
@@ -423,6 +457,8 @@ with tabs[2]:
         st.write("Explanation for Weekly Data")
         fig_week = plot_zone_data(df_week, f'Case and Positive Rates for {df_week["zcta"].values[0]}')
         st.pyplot(fig_week)
+        
+st.divider()
 st.subheader("Positive Tests by Zone and Year")
         
 def group_by_year_zone(input_df):
@@ -432,17 +468,15 @@ df_year_zone = group_by_year_zone(df)
         
 pivot = df_year_zone.pivot(index='zcta', columns='Start date', values='positive tests')
 
-# Convert the DataFrame to long format for Altair
 pivot_long = pivot.reset_index().melt(id_vars='zcta', var_name='Start date', value_name='positive tests')
 
-# Create the bar chart with Altair
 chart = alt.Chart(pivot_long).mark_bar().encode(
     x='zcta:N',
     y='positive tests:Q',
     color='Start date:N',
     tooltip=['zcta', 'Start date', 'positive tests']
 ).properties(
-    width=alt.Step(20)  # Adjust the width as needed
+    width=alt.Step(20)  
 ).configure_axis(
     labelAngle=45
 )
@@ -453,7 +487,8 @@ def population_by_zone(input_df: pd.DataFrame):
     return input_df.groupby(['zcta']).agg({'population': 'first', 'test count': 'sum'}).reset_index()
 
 df_population = population_by_zone(df)
-st.title('Population Test Count by Zone')
+st.divider()
+st.subheader('Population Test Count by Zone')
 
 chart = alt.Chart(df_population).mark_bar().encode(
     x='zcta:N',
@@ -465,7 +500,6 @@ chart = alt.Chart(df_population).mark_bar().encode(
     title='Population Test Count by Zone'
 )
 
-# Display the Altair chart using Streamlit
 st.altair_chart(chart, use_container_width=True)
 
 st.subheader('Scatter Plot of Population and Tests')
@@ -480,11 +514,10 @@ chart = alt.Chart(df_population).mark_circle().encode(
     title='Scatter Plot of Population and Tests'
 )
 
-# Display the Altair chart using Streamlit
 st.altair_chart(chart, use_container_width=True)
 
 
-# Function to get most affected zones
+
 def get_most_affected_zones(input_df: pd.DataFrame) -> pd.DataFrame:
     return input_df.groupby(['zcta']).agg({'case count': 'sum'}).reset_index().sort_values(by='case count', ascending=False)
 

@@ -6,12 +6,31 @@ import plotly.express as px
 from sklearn.decomposition import PCA
 from models.utils import Strategy
 from typing import get_args
-
+import base64
 st.set_page_config(page_title="Soil Sample Classification App", page_icon=":bar_chart:", layout="wide")
+def add_bg_from_local(image_file):
+    with open(image_file, "rb") as image_file:
+        encoded_string = base64.b64encode(image_file.read()).decode()
+    st.markdown(
+        f"""
+        <style>
+        .stApp {{
+            background-image: url("data:image/png;base64,{encoded_string}");
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+        }}
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+
+
+add_bg_from_local(r'C:\Users\user\OneDrive\Bureau\data_mining-master\data\huh.png')
+
 
 st.title("Predicting Soil Sample Classification 😎")
 
-# Load your preprocessed data
 data = pd.read_csv('data/Dataset1.csv')
 X, y, scalar = treat_input_data(data, normalization='minmax')
 
