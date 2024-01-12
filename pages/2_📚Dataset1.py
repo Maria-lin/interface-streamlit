@@ -1,20 +1,15 @@
-import streamlit.components.v1 as components
 import base64
 import altair as alt
-from pathlib import Path
 from enum import Enum
 import seaborn as sns
 import matplotlib.pyplot as plt
 from matplotlib import pyplot as plt
-from pprint import pprint
 from collections import Counter
 import numpy as np
 import streamlit as st
 import plotly.express as px
 import pandas as pd
-import os
-import warnings
-warnings.filterwarnings('ignore')
+
 st.set_page_config(page_title="Data Exploration Dashboard",
                    page_icon=":chart_with_upwards_trend:", layout="wide")
 st.title(" 	:bar_chart: Data Exploration ")
@@ -45,44 +40,26 @@ def add_bg_from_local(image_file):
 add_bg_from_local('data\huh.png')
 
 
-fl = st.file_uploader(":file_folder: Upload a file",
-                      type=(["csv", "txt", "xlsx", "xls"]))
-if fl is not None:
-    filename = fl.name
-    st.write(filename)
-    df = pd.read_csv(filename, encoding="ISO-8859-1")
-else:
+df = pd.read_csv("data/Dataset1.csv")
+st.subheader("Loaded Dataset")
 
-    df = pd.read_csv("data/Dataset1.csv", encoding="ISO-8859-1")
-    st.subheader("Loaded Dataset")
-
-col1, col2 = st.columns((2))
+col1, col2 = st.columns([0.8, 0.2])
 # col = st.columns((8.5,2), gap='medium')
 _, view4, dwn4 = st.columns([0.5, 0.45, 0.45])
 
 with col1:
-
-    st.dataframe(df.head())
+    with st.expander("Data overview", expanded=True):
+        st.write("Dataset Overview:")
+        st.write("Rows:", df.shape[0])
+        st.write("Columns:", df.shape[1])
+        st.dataframe(df)
 
 with col2:
-    with st.expander('About', expanded=False):
-        st.write('''
-            - Data: [U.S. Census Bureau](https://www.census.gov/data/datasets/time-series/demo/popest/2010s-state-total.html).
-            - :orange[**Gains/Losses**]: states with high inbound/ outbound migration for selected year
-            - :orange[**States Migration**]: percentage of states with annual inbound/ outbound migration > 50,000
-            ''')
-    result2 = df.head()
-    st.download_button("Get Data", data=result2.to_csv().encode("utf-8"),
+    st.download_button("Get Data", data=df.to_csv().encode("utf-8"),
                        file_name="Dataset1.csv", mime="text/csv")
 
 
 df_numeric = df.apply(pd.to_numeric, errors='coerce')
-
-df_filled = df_numeric.fillna(0)
-
-np.random.seed(42)
-correlation_matrix = np.random.rand(10, 10)
-
 
 st.divider()
 st.subheader('Distribution :blue[ Analysis ] ')
@@ -90,13 +67,15 @@ col1, col2 = st.columns((2))
 
 with col1:
     with st.expander("Correlation Matrix Heatmap"):
-        plt.figure(figsize=(10, 4))
-        sns.heatmap(correlation_matrix, annot=True, cmap="YlGnBu",
-                    linewidths=.5, fmt=".2f", cbar_kws={"shrink": 0.75}, cbar=None)
-        plt.title("Customized Heatmap")
-        plt.xlabel("X Axis Label")
-        plt.ylabel("Y Axis Label")
-        st.pyplot(plt)
+        fig = px.imshow(
+            df_numeric.corr(),
+            x=df_numeric.columns,
+            y=df_numeric.columns,
+            color_continuous_scale="Viridis",
+            title="Correlation Matrix Heatmap",
+        )
+        st.plotly_chart(fig, use_container_width=True)
+        st.info('We can notive that the OM and OC columns are duplicates')
 
 
 with col2:
@@ -115,43 +94,20 @@ def check_weird_values(data):
         try:
             data[col] = data[col].astype(float)
         except ValueError as err:
-            print(f'could not convert data on column "{col}" with error {err}')
+            pass
 
 
-check_weird_values(df)
-
-
-def check_duplicated(data: pd.DataFrame):
-    if num_duplicated := sum(data.duplicated()):
-        print(f'df has {num_duplicated} duplicated rows')
-    else:
-        print('data frame has no duplicated rows')
-
-
-check_duplicated(df)
 st.divider()
-st.subheader('Number of :blue[ empty values ] in each column:')
-col1, col2 = st.columns((2))
+st.subheader('Data :blue[ descreption ]:')
+col1, col2 = st.columns([0.6, 0.4])
 
 with col1:
+    with st.expander("Descriptive Statistics"):
+        st.write("Dataset Overview:")
+        st.write("Rows:", df.shape[0])
+        st.write("Columns:", df.shape[1])
+        st.dataframe(df.describe().T)
 
-    missing_values_df = pd.DataFrame({
-        'Column': df.columns,
-        'Missing Values': df.isnull().sum()
-    })
-
-    with st.expander("Missing Values Summary", expanded=False):
-
-        formatted_missing_values_df = missing_values_df.copy()
-        formatted_missing_values_df['Missing Values'] = formatted_missing_values_df['Missing Values'].apply(
-            lambda x: f'{x:.0f}')
-
-        st.dataframe(
-            formatted_missing_values_df,
-            width=None,
-            height=None,
-            hide_index=True
-        )
 with col2:
 
     with st.expander("Visualize Missing Values"):
@@ -164,12 +120,8 @@ with col2:
         fig = px.bar(missing_values_df, x='Attribute', y='Missing Values',
                      labels={'Missing Values': 'Number of Missing Values'},
                      title='Missing Values in Each Attribute',
-                     width=400,
-                     height=400)
-        st.plotly_chart(fig)
-
-
-st.divider()
+                     )
+        st.plotly_chart(fig, use_container_width=True)
 
 
 def remove_rows_with_errors(input_df: pd.DataFrame) -> pd.DataFrame:
@@ -179,13 +131,11 @@ def remove_rows_with_errors(input_df: pd.DataFrame) -> pd.DataFrame:
         try:
             input_df[col] = input_df[col].astype(float)
         except ValueError as e:
-            print(f'could not convert data on column "{col}" with error {e}')
             error_rows.extend(input_df[col][pd.to_numeric(
                 input_df[col], errors='coerce').isna()].index.tolist())
 
     error_rows = np.unique(error_rows)
     df_cleaned = df.drop(index=error_rows)
-    print(f'removed rows are : {error_rows}')
 
     return df_cleaned
 
@@ -210,113 +160,16 @@ def remove_rows_with_missing_values(input_df: pd.DataFrame) -> pd.DataFrame:
 
 
 def clean_df(input_df: pd.DataFrame) -> pd.DataFrame:
+    check_weird_values(input_df)
     input_df = remove_rows_with_errors(input_df)
     input_df = remove_duplicates_from_dataframe(input_df)
     input_df = remove_rows_with_missing_values(input_df)
+    input_df.drop(['OC'], axis=1, inplace=True)  # drop duplicate column
     return input_df
 
 
 df = clean_df(df)
-check_duplicated(df)
 check_weird_values(df)
-
-
-def global_describe(input_data):
-    """
-    Provide a simple global description for a pandas DataFrame.
-
-    Parameters:
-    dataframe (pandas.DataFrame): The input DataFrame.
-
-    Returns:
-    dict: A dictionary containing the number of rows, number of columns, and data type of each column.
-    """
-    num_rows = len(input_data)
-    num_columns = len(input_data.columns)
-    column_types = input_data.dtypes.to_dict()
-
-    global_desc = {
-        'num_rows': num_rows,
-        'num_columns': num_columns,
-        'column_types': column_types,
-    }
-
-    return global_desc
-
-
-all_columns = global_describe(df)
-
-
-def custom_describe(input_df: pd.DataFrame):
-    result = {}
-
-    for column in input_df.columns:
-        sorted_values = sorted(input_df[column].tolist())
-        # Maximum
-        max_val = sorted_values[-1]
-
-        # Minimum
-        min_val = sorted_values[0]
-
-        # Mean
-        mean = sum(sorted_values) / len(sorted_values)
-
-        # Mode
-        counter = Counter(input_df[column])
-        mode = counter.most_common(1)[0][0]
-
-        # Median
-        n = len(sorted_values)
-        if n % 2 == 0:
-            median = (sorted_values[n // 2 - 1] + sorted_values[n // 2]) / 2
-        else:
-            median = sorted_values[n // 2]
-
-        # Standard Deviation
-        std_val = (sum((x - mean) ** 2 for x in sorted_values) /
-                   len(sorted_values)) ** 0.5
-
-        # Quantiles
-        quantiles = {
-            f'{column}_Q0': min_val,
-            f'{column}_Q1': sorted_values[int(0.25 * n)],
-            f'{column}_Q2': median,
-            f'{column}_Q3': sorted_values[int(0.75 * n)],
-            f'{column}_Q4': max_val
-        }
-
-        result[column] = {
-            'max': max_val,
-            'min': min_val,
-            'mean': mean,
-            'mode': mode,
-            'median': median,
-            'std': std_val,
-            'quantiles': quantiles
-        }
-
-    return result
-
-
-result_custom = custom_describe(df)
-result_default = df.describe().transpose()
-custom_stats = {}
-for column, stats in result_custom.items():
-    if column not in result_default.index:
-        custom_stats[column] = stats
-with col1:
-    with st.expander("Data description", expanded=False):
-        st.write(all_columns)
-
-with col2:
-    with st.expander("Combined Describe Result", expanded=False):
-        st.subheader("Default Statistics (df.describe()):")
-        st.table(result_default)
-
-        st.subheader("Custom Statistics:")
-        for column, stats in custom_stats.items():
-            st.write(f"Column: {column}")
-            st.table(pd.DataFrame(stats).transpose())
 
 
 st.subheader("Data :blue[Visualization]")
@@ -452,9 +305,6 @@ def detect_and_treat_outliers(dataframe: pd.DataFrame, *, threshold: float = 1.5
         column_outliers = values[(values < lower_bound) | (
             values > upper_bound)].index.to_list()
 
-        if show and column_outliers:
-            print(f"Outliers in column '{column}': {column_outliers}")
-
         values[column_outliers] = values.mean()
         dataframe[column] = values
     return dataframe
@@ -561,12 +411,13 @@ with st.form("my_form"):
     submit_button = st.form_submit_button(label='Generate')
 
 if submit_button:
+    Y = df['Fertility']
+    X = df.drop(['Fertility'], axis=1)
     if normalization_method == 'Min-Max Scaling':
-        df_normalized = min_max_scaling(df)
-        pprint(df)
+        df_normalized = min_max_scaling(X)
     else:
-        df_normalized = z_score_normalization(df)
-
+        df_normalized = z_score_normalization(X)
+    df_normalized['Fertility'] = Y
     if selected_columns:
         plot_chart(df_normalized[selected_columns],
                    plot_type, selected_columns)
