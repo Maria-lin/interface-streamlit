@@ -8,6 +8,7 @@ import numpy as np
 import streamlit as st
 import plotly.express as px
 import pandas as pd
+from pathlib import Path
 
 st.set_page_config(page_title="Data Exploration Dashboard",
                    page_icon=":chart_with_upwards_trend:", layout="wide")
@@ -36,7 +37,8 @@ def add_bg_from_local(image_file):
 
 
 # Ajout de l'image de fond
-add_bg_from_local('data\huh.png')
+data_dir = Path(__file__).parent.parent / 'data'
+add_bg_from_local(data_dir / 'huh.png')
 
 
 df = pd.read_csv("data/Dataset1.csv")
