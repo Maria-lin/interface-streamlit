@@ -5,21 +5,9 @@ from collections import Counter
 from typing import Literal
 import altair as alt
 import pandas as pd
-from pprint import pprint
-import seaborn as sns
-from pathlib import Path
-from datetime import datetime
-from enum import Enum
-import matplotlib.pyplot as plt
 import streamlit as st
 import plotly.express as px
-import os
-import warnings
 import numpy as np
-warnings.filterwarnings('ignore')
-
-
-data_dir = Path('../data')
 
 
 st.set_page_config(page_title="Dataset3!!!",
@@ -51,39 +39,21 @@ st.title(" :bar_chart: Apriori")
 st.markdown(
     '<style>div.block-container{padding-top:1rem;}</style>', unsafe_allow_html=True)
 
-
-fl = st.file_uploader(":file_folder: Upload a file",
-                      type=(["csv", "txt", "xlsx", "xls"]))
-if fl is not None:
-    filename = fl.name
-    st.write(filename)
-    df = pd.read_csv(filename, encoding="ISO-8859-1")
-else:
-
-    df = pd.read_csv("data/Dataset3.csv", encoding="ISO-8859-1")
-    st.subheader("Loaded Dataset")
+df = pd.read_csv("data/Dataset3.csv", encoding="ISO-8859-1")
+st.subheader("Loaded Dataset")
 
 col1, col2 = st.columns((2))
-# col = st.columns((8.5,2), gap='medium')
 _, view4, dwn4 = st.columns([0.5, 0.45, 0.45])
 
 with col1:
 
-    st.dataframe(df.head())
+    st.dataframe(df)
 
 with col2:
-
-    with st.expander("Voir les informations du DataFrame"):
-        st.write("### Informations sur le DataFrame:")
-        st.write(df.info())
-    with st.expander("describe data"):
-        st.write("### Informations sur le DataFrame:")
-        st.write(df.describe())
-    with st.expander('Remarque', expanded=False):
-        st.write('''
-            - :orange[**Missing/Values**]: we have some missing values in the columns 'test count', 'case count' and 'positive tests'
-            - :orange[**type columns**]: we have two columns with type object that represents dates, we should transform them into time series
-            ''')
+    st.write("### Data overview")
+    st.write("Rows:", df.shape[0])
+    st.write("Columns:", df.shape[1])
+    st.write(df.describe().T)
 
     st.download_button("Get Data", data=df.to_csv().encode("utf-8"),
                        file_name="Dataset3.csv", mime="text/csv")
@@ -108,11 +78,11 @@ def discretize_equal_width(input_df, column, *, n_bins=0):
         if row_temp > ranges[current_bin + 1]:
             current_bin += 1
         class_column.append(labels[current_bin])
-    input_df[f'class_{column}'] = class_column
+    input_df[column] = class_column
     return input_df
 
 
-def plot_classes(input_df, column=f'class_{discretize_column}'):
+def plot_classes(input_df, column=discretize_column):
     chart = alt.Chart(input_df).mark_bar().encode(
         x=alt.X(column, title='Classes'),
         y=alt.Y('count()', title='Count'),
@@ -143,7 +113,7 @@ def discretize_equal_freq(input_df, column, *, n_bins=0):
             current_bin += 1
         discrete_column.append(labels[current_bin])
 
-    input_df[f'class_{column}'] = discrete_column
+    input_df[column] = discrete_column
 
     return input_df
 
@@ -151,7 +121,6 @@ def discretize_equal_freq(input_df, column, *, n_bins=0):
 st.subheader('Equal Width/Frequency Discretization and Class Distribution')
 
 
-discretize_column = 'Temperature'
 df_width = discretize_equal_width(df, discretize_column)
 
 
@@ -171,26 +140,43 @@ with st.expander("Equal Frequency Discretization"):
 
     st.dataframe(df_freq.head())
     st.altair_chart(plot_classes(
-        df_freq, f'class_{discretize_column}'), use_container_width=True)
+        df_freq, discretize_column), use_container_width=True)
 
 st.divider()
+
+# discretisize all numeric columns
+
+numerical_columns = [column for column in df.columns if column not in [
+    'Fertilizer', 'Soil', 'Crop']]
+
+df_width = df.copy()
+
+for column in numerical_columns:
+    df_width = discretize_equal_width(df_width, column)
+
+predictable_classes = list(df.columns)
+grouping_classes = predictable_classes.copy()
+
+predict_class = st.selectbox("Select column to predict", predictable_classes)
+grouping_classes.remove(predict_class)
+
+groupe_by_classes = st.multiselect(
+    "Select columns to group-by", grouping_classes, default=grouping_classes)
 
 
 def get_grouped_df(input_df, columns=None):
     if columns is None:
-        columns = ['Soil', 'Fertilizer', 'Crop']
+        columns = grouping_classes
     return input_df.groupby(columns).agg({
-        f'class_{discretize_column}': set,
-    }).rename(columns={f'class_{discretize_column}': 'Items'})
+        predict_class: set,
+    }).rename(columns={predict_class: 'Items'})
 
 
-grouped_df = get_grouped_df(df_width)
-grouped_df.to_csv('data/part3_grouped_df.csv')
+grouped_df = get_grouped_df(df_width, columns=groupe_by_classes)
 
 st.subheader('Apriori and association rules')
 with st.expander("Grouped DataFrame"):
-    st.subheader('Grouped DataFrame')
-    st.dataframe(get_grouped_df(df_width))
+    st.table(grouped_df)
 
 
 class Apriori:
@@ -418,44 +404,40 @@ class Apriori:
         return sorted(predictions, key=lambda x: x[1], reverse=True)
 
 
-apriori = Apriori(min_support=0.4, min_confidence=0.8)
-
 st.subheader("Apriori Algorithm Interface")
 
 
 with st.form(key='algorithm_parameters'):
     st.subheader("Algorithm Parameters")
-    min_support = st.slider("Minimum Support", 0.1, 1.0, apriori.min_support)
+    min_support = st.slider("Minimum Support", 0.1, 1.0)
     min_confidence = st.slider(
-        "Minimum Confidence", 0.1, 1.0, apriori.min_confidence)
-
-    apriori.set_params(min_support=min_support, min_confidence=min_confidence)
+        "Minimum Confidence", 0.1, 1.0)
 
     submit_button = st.form_submit_button(label='Run Apriori Algorithm')
 
 # Display frequent itemsets and rules if the algorithm parameters form is submitted
 if submit_button:
+    st.session_state['apriori'] = Apriori(
+        min_support=min_support, min_confidence=min_confidence)
     # Fit the algorithm with the data
-    apriori.fit(grouped_df)
+    st.session_state['apriori'].fit(grouped_df)
 
+
+if 'apriori' in st.session_state:
     st.subheader("Frequent Itemsets")
-    st.write(apriori.frequent_itemsets)
+    st.write(st.session_state['apriori'].frequent_itemsets)
 
     st.subheader("Rules")
-    st.write(apriori.rules)
+    st.write(st.session_state['apriori'].rules)
 
     # Metric selection form
     st.header("Metric Selection")
 
     # Form for choosing the metric
-    with st.form(key='metric_selection'):
-        metric = st.selectbox("Select Metric", [
-                              'confidence', 'cosine', 'lift', 'all_confidence', 'jaccard', 'kulczynski', 'max_confidence'])
-        n_rules = st.slider("Number of Rules to Display", 1, 20, 2)
+    metric = st.selectbox("Select Metric", [
+        'confidence', 'cosine', 'lift', 'all_confidence', 'jaccard', 'kulczynski', 'max_confidence'])
+    n_rules = st.slider("Number of Rules to Display", 1, 20, 2)
 
-        submit_metric_button = st.form_submit_button(label='Show Strong Rules')
-
-    if submit_metric_button:
-        st.header(f"Strong Rules - Metric: {metric}")
-        st.write(apriori.get_strong_rules(metric=metric, n_rules=n_rules))
-        st.markdown('---')
+    st.header(f"Strong Rules - Metric: {metric}")
+    st.write(st.session_state['apriori'].get_strong_rules(
+        metric=metric, n_rules=n_rules))
