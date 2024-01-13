@@ -7,6 +7,7 @@ import altair as alt
 import pandas as pd
 import streamlit as st
 import numpy as np
+from pathlib import Path
 
 
 st.set_page_config(page_title="Dataset3!!!",
@@ -31,7 +32,8 @@ def add_bg_from_local(image_file):
     )
 
 
-add_bg_from_local('data\huh.png')
+data_dir = Path(__file__).parent.parent / 'data'
+add_bg_from_local(data_dir / 'huh.png')
 
 
 st.title(" :bar_chart: Apriori")

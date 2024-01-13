@@ -6,7 +6,7 @@ from datetime import datetime
 from enum import Enum
 import matplotlib.pyplot as plt
 import streamlit as st
-import plotly.express as px
+from pathlib import Path
 
 
 st.set_page_config(page_title="Superstore!!!",
@@ -35,7 +35,8 @@ def add_bg_from_local(image_file):
     )
 
 
-add_bg_from_local('data\huh.png')
+data_dir = Path(__file__).parent.parent / 'data'
+add_bg_from_local(data_dir / 'huh.png')
 
 
 df = pd.read_csv("data/Dataset2.csv", encoding="ISO-8859-1")

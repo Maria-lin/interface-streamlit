@@ -1,7 +1,9 @@
 
 import streamlit as st
-from PIL import Image
+from pathlib import Path
 import base64
+
+# Définition du titre de la page et de la mise en page
 
 st.set_page_config(page_title='Projet Data Mining', layout='wide')
 
@@ -27,7 +29,8 @@ def add_bg_from_local(image_file):
 
 
 # Ajout de l'image de fond
-add_bg_from_local('data\huh.png')
+data_dir = Path(__file__).parent / 'data'
+add_bg_from_local(data_dir / 'huh.png')
 
 # Titre du projet
 st.title('	:bar_chart: Projet Data Mining')

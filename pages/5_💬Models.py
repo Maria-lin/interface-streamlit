@@ -7,6 +7,8 @@ from sklearn.decomposition import PCA
 from models.utils import Strategy
 from typing import get_args
 import base64
+from pathlib import Path
+
 st.set_page_config(page_title="Soil Sample Classification App",
                    page_icon=":bar_chart:", layout="wide")
 
@@ -29,7 +31,8 @@ def add_bg_from_local(image_file):
     )
 
 
-add_bg_from_local('data\huh.png')
+data_dir = Path(__file__).parent.parent / 'data'
+add_bg_from_local(data_dir / 'huh.png')
 
 
 st.title("Predicting Soil Sample Classification 😎")
