@@ -298,13 +298,24 @@ df_by_zone = regroup_data_by_zone(df)
 melted_df = pd.melt(df_by_zone, id_vars='zcta',
                     var_name='variable', value_name='value')
 
-chart = px.bar(melted_df, x='zcta', y='value', color='variable',
-               barmode='group', title='Distribution of COVID-19 Tests and Cases by Zone')
+chart = alt.Chart(melted_df).mark_bar().encode(
+    x=alt.X('zcta:N', axis=alt.Axis(labelAngle=45), title='ZCTA'),
+    y=alt.Y('value:Q', axis=alt.Axis(title='Value')),
+    color='variable:N',
+    tooltip=['zcta', 'variable', 'value']
+).properties(
+    width=alt.Step(20),
+).configure_axis(
+    labelAngle=45
+).interactive()
+
 st.divider()
+
 col1, col2 = st.columns(2)
+
 with col1:
     st.subheader('Distribution of COVID-19 Tests and Cases by Zone')
-    st.plotly_chart(chart, use_container_width=True)
+    st.altair_chart(chart, use_container_width=True)
 with col2:
 
     st.markdown("""
@@ -539,7 +550,7 @@ def plot_most_affected_zone_by_case_count(input_df: pd.DataFrame, number_of_zone
 
 st.subheader('Analysis of Most Affected Zones')
 number_of_zones = st.slider(
-    'Select Number of Zones:', min_value=1, max_value=len(df['zcta']), value=5)
+    'Select Number of Zones:', min_value=1, max_value=len(df['zcta'].unique()), value=5)
 
 most_affected_zones = get_most_affected_zones(df)
 
