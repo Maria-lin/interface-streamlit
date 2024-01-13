@@ -164,7 +164,7 @@ groupe_by_classes = st.multiselect(
 
 
 def get_grouped_df(input_df, columns=None):
-    if columns is None:
+    if columns is None or not columns:
         columns = grouping_classes
     return input_df.groupby(columns).agg({
         predict_class: set,
@@ -175,7 +175,7 @@ grouped_df = get_grouped_df(df_width, columns=groupe_by_classes)
 
 st.subheader('Apriori and association rules')
 with st.expander("Grouped DataFrame"):
-    st.table(grouped_df)
+    st.dataframe(grouped_df, width=800)
 
 
 class Apriori:
